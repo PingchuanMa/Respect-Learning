@@ -19,7 +19,7 @@ from tools.utils import *
 from tools.plot_rewards import plot_rewards
 
 
-def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, cont=False, iter=None, save_final=True):
+def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, cont=False, iter=None, save_final=True, play=False):
 
     env = ProstheticsEnv(visualize=False)
 
@@ -48,6 +48,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, cont=False
                              save_interval=50,
                              reward_list=reward_list,
                              cont=cont,
+                             play=play,
                              iter=iter)
     env.close()
 
@@ -63,7 +64,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, cont=False
 
 def test(identifier, policy_fn, seed, iter):
     
-    pi = train(identifier, policy_fn, 1, 500, seed, save_final=False)
+    pi = train(identifier, policy_fn, 1, 1, seed, save_final=False, play=True)
     load_state(identifier, iter)
     env = ProstheticsEnv(visualize=True)
 

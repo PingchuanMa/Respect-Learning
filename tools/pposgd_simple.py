@@ -111,6 +111,7 @@ def learn(env, policy_fn, *,
           save_interval=100,
           reward_list=[],
           cont=False,
+          play=False,
           iter):
     # Setup losses and stuff
     # ----------------------------------------
@@ -162,6 +163,9 @@ def learn(env, policy_fn, *,
     assign_old_eq_new = U.function([],[], updates=[tf.assign(oldv, newv)
         for (oldv, newv) in zipsame(oldpi.get_variables(), pi.get_variables())])
     compute_losses = U.function(inputs, losses)
+
+    if play:
+        return pi
 
     if cont:
         load_state(identifier, iter)
