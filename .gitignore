@@ -2,4 +2,4 @@ __pycache__/
 *.pyc
 *.log
 results/
-token.txt
+token*.txt

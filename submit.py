@@ -15,6 +15,7 @@ from tools.utils import load_state
 from tools import mlp_policy
 from run import train
 from util import state_desc_to_ob
+import param
 
 # Settings
 remote_base = "http://grader.crowdai.org:1729"
@@ -33,9 +34,12 @@ def submit(identifier, policy_fn, seed, iter):
     pi = train(identifier, policy_fn, 1, 1, seed, save_final=False, play=True)
     load_state(identifier, iter)
 
+    count = 0
     while True:
         ob = state_desc_to_ob(observation)
-        action = pi.act(False, np.array(ob))[0].tolist()
+        if count % param.action_repeat == 0:
+            action = pi.act(False, np.array(ob))[0].tolist()
+        count += 1
         [observation, reward, done, info] = client.env_step(action, True)
         if done:
             observation = client.env_reset()

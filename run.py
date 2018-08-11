@@ -11,17 +11,19 @@ import sys
 base_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(base_dir)
 
-from osim.env import ProstheticsEnv
+from env import ProstheticsEnv
 
 from tools import pposgd_simple
 from tools import mlp_policy
 from tools.utils import *
 from tools.plot_rewards import plot_rewards
+import param
 
 
 def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, cont=False, iter=None, save_final=True, play=False):
 
-    env = ProstheticsEnv(visualize=False)
+    env = ProstheticsEnv(visualize=False, integrator_accuracy=5e-5)
+    env.osim_model.stepsize = param.action_repeat * env.osim_model.stepsize
 
     if cont:
         assert iter is not None
@@ -69,8 +71,11 @@ def test(identifier, policy_fn, seed, iter):
     env = ProstheticsEnv(visualize=True)
 
     observation = env.reset()
+    count = 0
     while True:
-        action = pi.act(False, np.array(observation))[0]
+        if count % param.action_repeat == 0:
+            action = pi.act(False, np.array(observation))[0]
+        count += 1
         observation, reward, done, info = env.step(action)
         if done:
             break
