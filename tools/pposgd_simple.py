@@ -11,7 +11,7 @@ from collections import deque
 from tools.utils import save_state, save_rewards, load_state
 
 
-def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None):
+def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_repeat=1):
     mirror = mirror_id is not None
     t = 0
     ac = env.action_space.sample() # not used, just so we have the datatype
@@ -35,12 +35,15 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None):
         mirror_acs = acs.copy()
 
     while True:
-        prevac = ac
-        ac, vpred = pi.act(stochastic, np.array(ob))
+        if cur_ep_len % action_repeat == 0:
+            prevac = ac
+            ac, vpred = pi.act(stochastic, np.array(ob))
         if mirror:
             mirror_ob = ob[mirror_id[0]]
-            mirror_ac, _ = pi.act(stochastic, np.array(mirror_ob))
-            mirror_ac = mirror_ac[mirror_id[1]]
+            if cur_ep_len % action_repeat == 0:
+                mirror_ac, _ = pi.act(stochastic, np.array(mirror_ob))
+                mirror_ac = mirror_ac[mirror_id[1]]
+
         # Slight weirdness here because we need value function at time T
         # before returning segment [0, T-1] so we get the correct
         # terminal value
@@ -112,7 +115,8 @@ def learn(env, policy_fn, *,
           reward_list=[],
           cont=False,
           play=False,
-          iter):
+          iter,
+          action_repeat=1):
     # Setup losses and stuff
     # ----------------------------------------
     ob_space = env.observation_space
@@ -176,7 +180,7 @@ def learn(env, policy_fn, *,
 
     # Prepare for rollouts
     # ----------------------------------------
-    seg_gen = traj_segment_generator(pi, env, timesteps_per_actorbatch, stochastic=True, mirror_id=mirror_id)
+    seg_gen = traj_segment_generator(pi, env, timesteps_per_actorbatch, stochastic=True, mirror_id=mirror_id, action_repeat=action_repeat)
 
     episodes_so_far = 0
     timesteps_so_far = 0

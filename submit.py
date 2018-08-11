@@ -43,6 +43,7 @@ def submit(identifier, policy_fn, seed, iter):
         [observation, reward, done, info] = client.env_step(action, True)
         if done:
             observation = client.env_reset()
+            count = 0
             if not observation:
                 break
 

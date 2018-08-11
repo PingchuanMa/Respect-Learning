@@ -23,7 +23,6 @@ import param
 def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, cont=False, iter=None, save_final=True, play=False):
 
     env = ProstheticsEnv(visualize=False, integrator_accuracy=5e-5)
-    env.osim_model.stepsize = param.action_repeat * env.osim_model.stepsize
 
     if cont:
         assert iter is not None
@@ -51,7 +50,8 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, cont=False
                              reward_list=reward_list,
                              cont=cont,
                              play=play,
-                             iter=iter)
+                             iter=iter,
+                             action_repeat=param.action_repeat)
     env.close()
 
     if save_final:
@@ -80,6 +80,7 @@ def test(identifier, policy_fn, seed, iter):
         if done:
             break
             # observation = env.reset()
+            # count = 0
 
 
 def main():
