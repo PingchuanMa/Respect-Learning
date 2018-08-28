@@ -1,6 +1,8 @@
-action_repeat = 1
+action_repeat = 4
 
 # reward
+rew_scale = 10
+rew_const = 0
 w_speed = 1
 w_pose = 1
 w_straight = 1

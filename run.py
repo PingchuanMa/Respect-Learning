@@ -71,12 +71,12 @@ def test(identifier, policy_fn, seed, iter):
     env = ProstheticsEnv(visualize=True)
 
     observation = env.reset()
-    count = 0
     while True:
-        if count % param.action_repeat == 0:
-            action = pi.act(False, np.array(observation))[0]
-        count += 1
-        observation, reward, done, info = env.step(action)
+        action = pi.act(False, np.array(observation))[0]
+        for _ in range(param.action_repeat):
+            observation, reward, done, info = env.step(action)
+            if done:
+                break
         if done:
             break
             # observation = env.reset()

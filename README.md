@@ -14,7 +14,7 @@ Run run.py for local training and testing, run submit.py for online submission.
 5. Reward scaling (works?)
 6. Action noise & parameter noise
 7. Layer normalization
-8. Symmetry handling
-9. Benchmark 1D conv / FC
-10. Reward shaping (encourage bending knees)
-11. Observation transformation (absolute position to relative position for body parts except pelvis)
+8. Benchmark 1D conv / FC
+9. Reward shaping (encourage bending knees)
+10. Observation selection
+11. Discretize action value

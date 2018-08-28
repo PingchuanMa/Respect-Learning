@@ -35,14 +35,12 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
         mirror_acs = acs.copy()
 
     while True:
-        if cur_ep_len % action_repeat == 0:
-            prevac = ac
-            ac, vpred = pi.act(stochastic, np.array(ob))
+        prevac = ac
+        ac, vpred = pi.act(stochastic, np.array(ob))
         if mirror:
             mirror_ob = ob[mirror_id[0]]
-            if cur_ep_len % action_repeat == 0:
-                mirror_ac, _ = pi.act(stochastic, np.array(mirror_ob))
-                mirror_ac = mirror_ac[mirror_id[1]]
+            mirror_ac, _ = pi.act(stochastic, np.array(mirror_ob))
+            mirror_ac = mirror_ac[mirror_id[1]]
 
         # Slight weirdness here because we need value function at time T
         # before returning segment [0, T-1] so we get the correct
@@ -69,7 +67,12 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
             mirror_obs[i] = mirror_ob
             mirror_acs[i] = mirror_ac
 
-        ob, rew, new, _ = env.step(ac)
+        rew = 0
+        for _ in range(action_repeat):
+            ob, r, new, _ = env.step(ac)
+            rew += r
+            if new:
+                break
         rews[i] = rew
 
         cur_ep_ret += rew
