@@ -29,5 +29,5 @@ class ProstheticsEnv(env.ProstheticsEnv):
         # rew_pose = param.w_pose * (9.0 + np.minimum(state_desc["body_pos"]["head"][0] - state_desc["body_pos"]["pelvis"][0], 0))
         # rew_fall = param.w_fall * (9.0 + np.minimum(state_desc["body_pos"]["head"][1] - state_desc["body_pos"]["pelvis"][1], 0))
         rew_total = rew_speed + rew_straight
-        rew_total = param.rew_scale * rew_total + param.rew_const
+        rew_total = param.rew_scale * (rew_total + param.rew_const)
         return rew_total

@@ -73,8 +73,10 @@ def test(identifier, policy_fn, seed, iter):
     observation = env.reset()
     while True:
         action = pi.act(False, np.array(observation))[0]
+        reward = 0
         for _ in range(param.action_repeat):
-            observation, reward, done, info = env.step(action)
+            observation, rew, done, info = env.step(action)
+            reward += rew
             if done:
                 break
         if done:
@@ -94,7 +96,7 @@ def main():
     parser.add_argument('--cont', default=False, action='store_true')
     parser.add_argument('--play', default=False, action='store_true')
     parser.add_argument('--iter', type=str, default='final')
-    parser.add_argument('--net', type=int, nargs='+', default=(128, 64))
+    parser.add_argument('--net', type=int, nargs='+', default=(256, 128, 64))
     args = parser.parse_args()
 
     def policy_fn(name, ob_space, ac_space):
