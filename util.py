@@ -31,7 +31,7 @@ def state_desc_to_ob(state_desc):
         res += [state_desc["muscles"][muscle]["fiber_length"]]
         res += [state_desc["muscles"][muscle]["fiber_velocity"]]
 
-    cm_pos = [state_desc["misc"]["mass_center_pos"][i] - pelvis[i] for i in range(2)]
+    cm_pos = [state_desc["misc"]["mass_center_pos"][i] - pelvis[i] for i in range(3)]
     res += cm_pos + state_desc["misc"]["mass_center_vel"]
 
     return res
