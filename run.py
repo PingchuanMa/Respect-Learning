@@ -22,7 +22,7 @@ import param
 
 def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, cont=False, iter=None, save_final=True, play=False):
 
-    env = ProstheticsEnv(visualize=False, integrator_accuracy=5e-5)
+    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy)
 
     if cont:
         assert iter is not None
