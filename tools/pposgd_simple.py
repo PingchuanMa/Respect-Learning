@@ -28,7 +28,6 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
     # Initialize history arrays
     obs = np.array([ob for _ in range(horizon)])
     rews = np.zeros(horizon, 'float32')
-    rews_ori = np.zeros(horizon, 'float32')
     vpreds = np.zeros(horizon, 'float32')
     news = np.zeros(horizon, 'int32')
     acs = np.array([ac for _ in range(horizon)])
@@ -49,7 +48,7 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
         # before returning segment [0, T-1] so we get the correct
         # terminal value
         if t > 0 and t % horizon == 0:
-            seg_dict = {"ob" : obs, "rew" : rews, "rew_ori" : rews_ori, "vpred" : vpreds, "new" : news,
+            seg_dict = {"ob" : obs, "rew" : rews, "vpred" : vpreds, "new" : news,
                         "ac" : acs, "prevac" : prevacs, "nextvpred": vpred * (1 - new),
                         "ep_rets" : ep_rets, "ep_rets_ori" : ep_rets_ori, "ep_lens" : ep_lens}
             if mirror:
@@ -81,7 +80,6 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
             if new:
                 break
         rews[i] = rew
-        rews_ori[i] = rew_ori
 
         cur_ep_ret += rew
         cur_ep_ret_ori += rew_ori
