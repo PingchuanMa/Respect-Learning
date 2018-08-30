@@ -34,16 +34,15 @@ def submit(identifier, policy_fn, seed, iter):
     pi = train(identifier, policy_fn, 1, 1, seed, save_final=False, play=True)
     load_state(identifier, iter)
 
-    count = 0
     while True:
         ob = state_desc_to_ob(observation)
-        if count % param.action_repeat == 0:
-            action = pi.act(False, np.array(ob))[0].tolist()
-        count += 1
-        [observation, reward, done, info] = client.env_step(action, True)
+        action = pi.act(False, np.array(ob))[0].tolist()
+        for _ in range(param.action_repeat):
+            [observation, reward, done, info] = client.env_step(action, True)
+            if done:
+                break
         if done:
             observation = client.env_reset()
-            count = 0
             if not observation:
                 break
 
@@ -54,7 +53,7 @@ def main():
 
     parser = argparse.ArgumentParser(description='Submit.')
     parser.add_argument('--id', type=str, default='origin')
-    parser.add_argument('--net', type=int, nargs='+', default=(128, 64))
+    parser.add_argument('--net', type=int, nargs='+', default=(256, 128, 64))
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--iter', type=str, default='final')
     args = parser.parse_args()
