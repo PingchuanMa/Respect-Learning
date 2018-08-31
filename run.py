@@ -11,7 +11,7 @@ import sys
 base_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(base_dir)
 
-from env import ProstheticsEnv
+from env import ProstheticsEnv, TestProstheticsEnv
 
 from tools import pposgd_simple
 from tools import mlp_policy
@@ -68,21 +68,31 @@ def test(identifier, policy_fn, seed, iter):
     
     pi = train(identifier, policy_fn, 1, 1, seed, save_final=False, play=True)
     load_state(identifier, iter)
-    env = ProstheticsEnv(visualize=True)
+    env = TestProstheticsEnv(visualize=True)
 
     observation = env.reset()
+    reward = 0
+    reward_ori = 0
     while True:
         action = pi.act(False, np.array(observation))[0]
-        reward = 0
-        for _ in range(param.action_repeat):
-            observation, rew, done, info = env.step(action)
-            reward += rew
+        rew = 0
+        rew_ori = 0
+        for ai in range(param.action_repeat):
+            observation, r, done, info = env.step(action)
+            r_ori = info['rew_ori']
+            rew = rew * ai / (ai + 1) + r / (ai + 1)
+            rew_ori = rew_ori * ai / (ai + 1) + r_ori / (ai + 1)
             if done:
                 break
+        reward += rew
+        reward_ori += rew_ori
         if done:
+            print('reward', reward)
+            print('reward_ori', reward_ori)
             break
             # observation = env.reset()
-            # count = 0
+            # reward = 0
+            # reward_ori = 0
 
 
 def main():

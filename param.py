@@ -1,6 +1,5 @@
 accuracy = 5e-3
 action_repeat = 2
-step_scale = 1
 
 # reward
 rew_scale = 10

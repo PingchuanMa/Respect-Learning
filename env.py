@@ -8,7 +8,6 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def __init__(self, visualize = True, integrator_accuracy = 5e-5):
         super().__init__(visualize, integrator_accuracy)
-        self.osim_model.stepsize = 0.01 * param.step_scale
 
     def is_done(self):
         state_desc = self.get_state_desc()
@@ -49,3 +48,11 @@ class ProstheticsEnv(env.ProstheticsEnv):
         
         rew_total, rew_ori = self.reward()
         return [ obs, rew_total, self.is_done() or (self.osim_model.istep >= self.spec.timestep_limit), {'rew_ori': rew_ori} ]
+
+
+class TestProstheticsEnv(ProstheticsEnv):
+
+    def is_done(self):
+        state_desc = self.get_state_desc()
+        return state_desc["body_pos"]["pelvis"][1] < 0.6
+
