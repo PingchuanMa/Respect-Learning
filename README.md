@@ -7,14 +7,19 @@ After following setup procedure on official website, run setup.sh for installing
 Run run.py for local training and testing, run submit.py for online submission.
 
 ## To-dos
-1. Speed-up physical simulator (current 20+steps/s)
-2. Customize environment
-3. Benchmark RL algorithm (DDPG, PPO, TRPO, ...)
-4. Benchmark activation function (SELU, RELU, ELU, ...)
-5. Reward scaling (works?)
-6. Action noise & parameter noise
-7. Layer normalization
-8. Benchmark 1D conv / FC
-9. Reward shaping (encourage bending knees)
-10. Observation selection
-11. Discretize action value
+### Simulator
+1. Understand observation, especially physical properties of joint
+2. Figure out the reason why action repeat slows things down so much
+### Reward Shaping
+1. Encourage bending knees
+2. Activate muscle more for speed up
+3. Encourage more aggressive stepping, currently the agent is too cautious to make a big step
+### RL Tricks
+1. Discretize action value
+2. Action noise & parameter noise
+3. Layer normalization
+4. Observation engineering
+### Benchmarks
+1. Network structure
+2. Activation function (SELU, RELU, ELU, ...)
+3. 1D conv / FC
