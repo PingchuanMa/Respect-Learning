@@ -6,8 +6,10 @@ from util import state_desc_to_ob
 
 class ProstheticsEnv(env.ProstheticsEnv):
 
-    def __init__(self, visualize = True, integrator_accuracy = 5e-5):
+    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para = 0.5):
         super().__init__(visualize, integrator_accuracy)
+        self.bend_para = bend_para
+        self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) 
 
     def is_done(self):
         state_desc = self.get_state_desc()
@@ -32,7 +34,13 @@ class ProstheticsEnv(env.ProstheticsEnv):
         rew_straight = -param.w_straight * (state_desc["body_pos"]["pelvis"][2] ** 2)
         # rew_pose = param.w_pose * (9.0 + np.minimum(state_desc["body_pos"]["head"][0] - state_desc["body_pos"]["pelvis"][0], 0))
         # rew_fall = param.w_fall * (9.0 + np.minimum(state_desc["body_pos"]["head"][1] - state_desc["body_pos"]["pelvis"][1], 0))
-        rew_total = rew_speed + rew_straight
+
+        rew_bend_l = np.exp( - np.square(state_desc["joint_pos"]["knee_l"][0] - self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) - self.bend_base
+        rew_bend_r = np.exp( - np.square(state_desc["joint_pos"]["knee_r"][0] - self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) - self.bend_base
+        
+        rew_bend = rew_bend_l + rew_bend_r 
+
+        rew_total = rew_speed + rew_straight + rew_bend
         rew_total = param.rew_scale * (rew_total + param.rew_const)
         return rew_total, rew_ori
 
