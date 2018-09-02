@@ -6,7 +6,7 @@ from util import state_desc_to_ob
 
 class ProstheticsEnv(env.ProstheticsEnv):
 
-    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para = 0.5):
+    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para = -0.9599310849999999):
         super().__init__(visualize, integrator_accuracy)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) 
@@ -38,7 +38,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
         rew_bend_l = np.exp( - np.square(state_desc["joint_pos"]["knee_l"][0] - self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) - self.bend_base
         rew_bend_r = np.exp( - np.square(state_desc["joint_pos"]["knee_r"][0] - self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) - self.bend_base
         
-        rew_bend = rew_bend_l + rew_bend_r 
+        rew_bend = 10 * (rew_bend_l + rew_bend_r )
 
         rew_total = rew_speed + rew_straight + rew_bend
         rew_total = param.rew_scale * (rew_total + param.rew_const)
