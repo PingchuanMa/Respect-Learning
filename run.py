@@ -20,9 +20,9 @@ from tools.plot_rewards import plot_rewards
 import param
 
 
-def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, cont=False, iter=None, save_final=True, play=False):
+def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, cont=False, iter=None, save_final=True, play=False):
 
-    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy)
+    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend)
 
     if cont:
         assert iter is not None
@@ -101,6 +101,7 @@ def main():
     parser = argparse.ArgumentParser(description='Train.')
     parser.add_argument('--id', type=str, default='origin')
     parser.add_argument('--step', type=int, default=1e9)
+    parser.add_argument('--bend', type=float, default=-0.9599310849999999)
     parser.add_argument('--step_per_iter', type=int, default=16384)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--cont', default=False, action='store_true')
@@ -124,7 +125,7 @@ def main():
 
     #train/test
     if not args.play:
-        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter)
+        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend)
     else:
         test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter)
 
