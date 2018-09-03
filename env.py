@@ -41,7 +41,9 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
         rew_total = rew_speed + rew_straight + rew_bend
         rew_total = param.rew_scale * (rew_total + param.rew_const)
-        return rew_total, rew_ori
+
+        rew_all = {'original': rew_ori, 'speed': rew_speed, 'straight': rew_straight, 'bend': rew_bend}
+        return rew_total, rew_all
 
     def step(self, action, project = True):
         self.prev_state_desc = self.get_state_desc()        
@@ -53,8 +55,8 @@ class ProstheticsEnv(env.ProstheticsEnv):
         else:
             obs = self.get_state_desc()
         
-        rew_total, rew_ori = self.reward()
-        return [ obs, rew_total, self.is_done() or (self.osim_model.istep >= self.spec.timestep_limit), {'rew_ori': rew_ori} ]
+        rew_total, rew_all = self.reward()
+        return [ obs, rew_total, self.is_done() or (self.osim_model.istep >= self.spec.timestep_limit), rew_all]
 
 
 class TestProstheticsEnv(ProstheticsEnv):
