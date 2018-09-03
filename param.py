@@ -8,4 +8,5 @@ w_speed = 1
 w_pose = 1
 w_straight = 1
 w_bend = 5
+# w_mirror = 1
 w_fall = 1
