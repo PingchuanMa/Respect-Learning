@@ -20,7 +20,7 @@ from tools.plot_rewards import plot_rewards
 import param
 
 
-def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, cont=False, iter=None, save_final=True, play=False):
+def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, cont=False, iter=None, save_final=True, play=False):
 
     env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend)
 
@@ -37,7 +37,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, cont
     pi = pposgd_simple.learn(env, policy_fn,
                              max_timesteps=num_timesteps,
                              timesteps_per_actorbatch=timesteps_per_actorbatch,
-                             clip_param=0.2, entcoeff=0.0,
+                             clip_param=0.2, entcoeff=ent,
                              optim_epochs=10,
                              optim_stepsize=3e-4,
                              optim_batchsize=64,
@@ -102,6 +102,7 @@ def main():
     parser.add_argument('--id', type=str, default='origin')
     parser.add_argument('--step', type=int, default=1e9)
     parser.add_argument('--bend', type=float, default=-0.9599310849999999)
+    parser.add_argument('--ent', type=float, default=0.001)
     parser.add_argument('--step_per_iter', type=int, default=16384)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--cont', default=False, action='store_true')
@@ -125,7 +126,7 @@ def main():
 
     #train/test
     if not args.play:
-        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend)
+        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent)
     else:
         test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter)
 
