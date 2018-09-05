@@ -35,6 +35,17 @@ class ProstheticsEnv(env.ProstheticsEnv):
         rew_straight = -param.w_straight * (state_desc["body_pos"]["pelvis"][2] ** 2)
         rew_straight -= param.w_straight * (state_desc["body_pos"]["head"][2] ** 2)
         rew_straight -= param.w_straight * (state_desc["body_pos"]["torso"][2] ** 2)
+
+        # original left   -0.0835
+        # original right   0.0835
+        shift_base = 0.0835
+
+        rew_straight -= param.w_straight * ((state_desc["body_pos"]["femur_r"][2] - shift_base ) ** 2)
+        rew_straight -= param.w_straight * ((state_desc["body_pos"]["femur_l"][2] + shift_base ) ** 2)
+
+        rew_straight -= param.w_straight * ((state_desc["body_pos"]["pros_tibia_r"][2] - shift_base ) ** 2)
+        rew_straight -= param.w_straight * ((state_desc["body_pos"]["tibia_l"][2] + shift_base ) ** 2)
+
         # rew_pose = param.w_pose * (9.0 + np.minimum(state_desc["body_pos"]["head"][0] - state_desc["body_pos"]["pelvis"][0], 0))
         # rew_fall = param.w_fall * (9.0 + np.minimum(state_desc["body_pos"]["head"][1] - state_desc["body_pos"]["pelvis"][1], 0))
 

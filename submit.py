@@ -31,7 +31,7 @@ def submit(identifier, policy_fn, seed, iter):
     observation = client.env_create(crowdai_token, env_id="ProstheticsEnv")
 
     # IMPLEMENTATION OF YOUR CONTROLLER
-    pi = train(identifier, policy_fn, 1, 1, seed, save_final=False, play=True, bend=0)
+    pi = train(identifier, policy_fn, 1, 1, seed, save_final=False, play=True, bend=0, ent=0)
     load_state(identifier, iter)
 
     while True:
