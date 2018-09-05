@@ -92,14 +92,14 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
                 cur_ep_ret_all[name] += val
 
         cur_ep_len += 1
+        if not ep_rets_all and cur_ep_ret_all:
+            for name in cur_ep_ret_all.keys():
+                ep_rets_all[name] = []
         if new:
             ep_rets.append(cur_ep_ret)
             if ep_rets_all:
                 for name, val in cur_ep_ret_all.items():
                     ep_rets_all[name].append(val)
-            elif cur_ep_ret_all:
-                for name, val in cur_ep_ret_all.items():
-                    ep_rets_all[name] = [val]
             ep_lens.append(cur_ep_len)
             cur_ep_ret = 0
             if cur_ep_ret_all:
@@ -278,9 +278,9 @@ def learn(env, policy_fn, *,
             losses.append(newlosses)
         meanlosses,_,_ = mpi_moments(losses, axis=0)
 
-        for (lossval, name) in zipsame(meanlosses, loss_names):
-            logger.record_tabular("loss_"+name, lossval)
-        logger.record_tabular("ev_tdlam_before", explained_variance(vpredbefore, tdlamret))
+        # for (lossval, name) in zipsame(meanlosses, loss_names):
+        #     logger.record_tabular("loss_"+name, lossval)
+        # logger.record_tabular("ev_tdlam_before", explained_variance(vpredbefore, tdlamret))
         lrlocal = [seg["ep_lens"], seg["ep_rets"]] # local values
         names = []
         if seg["ep_rets_all"]:
