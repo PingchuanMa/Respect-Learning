@@ -78,8 +78,8 @@ def test(identifier, policy_fn, seed, iter):
         rew = 0
         rew_ori = 0
         for ai in range(param.action_repeat):
-            observation, r, done, info = env.step(action)
-            r_ori = info['rew_ori']
+            observation, r, done, r_all = env.step(action)
+            r_ori = r_all['original']
             rew = rew * ai / (ai + 1) + r / (ai + 1)
             rew_ori = rew_ori * ai / (ai + 1) + r_ori / (ai + 1)
             if done:
