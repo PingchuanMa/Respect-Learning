@@ -21,7 +21,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def get_observation_space_size(self):
         if self.prosthetic == True:
-            return 331
+            return 334
         return 167
 
     def reward(self):
@@ -32,17 +32,14 @@ class ProstheticsEnv(env.ProstheticsEnv):
         rew_ori = 9.0 - (state_desc["body_vel"]["pelvis"][0] - 3.0) ** 2
         rew_speed = param.w_speed * rew_ori
         rew_straight = -param.w_straight * (state_desc["body_pos"]["pelvis"][2] ** 2)
-        # rew_pose = param.w_pose * (9.0 + np.minimum(state_desc["body_pos"]["head"][0] - state_desc["body_pos"]["pelvis"][0], 0))
-        # rew_fall = param.w_fall * (9.0 + np.minimum(state_desc["body_pos"]["head"][1] - state_desc["body_pos"]["pelvis"][1], 0))
+        # rew_bend_l = np.exp( - np.square(state_desc["joint_pos"]["knee_l"][0] - self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) - self.bend_base
+        # rew_bend_r = np.exp( - np.square(state_desc["joint_pos"]["knee_r"][0] - self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) - self.bend_base
+        # rew_bend = param.w_bend * (rew_bend_l + rew_bend_r )
 
-        rew_bend_l = np.exp( - np.square(state_desc["joint_pos"]["knee_l"][0] - self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) - self.bend_base
-        rew_bend_r = np.exp( - np.square(state_desc["joint_pos"]["knee_r"][0] - self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) - self.bend_base
-        rew_bend = param.w_bend * (rew_bend_l + rew_bend_r )
-
-        rew_total = rew_speed + rew_straight + rew_bend
+        rew_total = rew_speed + rew_straight
         rew_total = param.rew_scale * (rew_total + param.rew_const)
 
-        rew_all = {'original': rew_ori, 'speed': rew_speed, 'straight': rew_straight, 'bend': rew_bend}
+        rew_all = {'original': rew_ori, 'speed': rew_speed, 'straight': rew_straight}
         return rew_total, rew_all
 
     def step(self, action, project = True):
