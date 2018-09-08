@@ -1,5 +1,7 @@
 from argparse import ArgumentParser
 import os
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import json
@@ -30,7 +32,7 @@ def plot_rewards(reward_list, title, order=6):
 def main():
 
     parser = ArgumentParser(description='Plot.')
-    parser.add_argument('--id', type=str)
+    parser.add_argument('--id', type=str, default='origin')
     parser.add_argument('--iter', type=str, default='final')
     parser.add_argument('--order', type=int, default=6)
     args = parser.parse_args()
