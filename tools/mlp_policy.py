@@ -2,13 +2,14 @@ from baselines.ppo1 import mlp_policy
 from baselines.common.mpi_running_mean_std import RunningMeanStd
 import baselines.common.tf_util as U
 import tensorflow as tf
+import tensorflow.contrib as tc
 import gym
 from baselines.common.distributions import make_pdtype
 
 
 class MlpPolicy(mlp_policy.MlpPolicy):
 
-    def _init(self, ob_space, ac_space, hid_layer_sizes, gaussian_fixed_var=True, noise_std=0.0):
+    def _init(self, ob_space, ac_space, hid_layer_sizes, gaussian_fixed_var=True, noise_std=0.0, layer_norm=False):
         assert isinstance(ob_space, gym.spaces.Box)
 
         self.pdtype = pdtype = make_pdtype(ac_space)
@@ -32,6 +33,8 @@ class MlpPolicy(mlp_policy.MlpPolicy):
             for i, size in enumerate(hid_layer_sizes):
                 last_out = tf.layers.dense(last_out, size, name="fc%i" % (i + 1),
                                                       kernel_initializer=U.normc_initializer(1.0))
+                if layer_norm:
+                    last_out = tc.layers.layer_norm(last_out, center=True, scale=True)
                 noise = tf.random_normal(shape=tf.shape(last_out), mean=0.0, stddev=noise_std, dtype=tf.float32)
                 last_out = tf.nn.relu(last_out + noise)
             if gaussian_fixed_var and isinstance(ac_space, gym.spaces.Box):
