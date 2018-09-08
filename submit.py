@@ -37,10 +37,10 @@ def submit(identifier, policy_fn, seed, iter):
     while True:
         ob = state_desc_to_ob(observation)
         action = pi.act(False, np.array(ob))[0].tolist()
-        for _ in range(param.action_repeat):
-            [observation, reward, done, info] = client.env_step(action, True)
-            if done:
-                break
+        # for _ in range(param.action_repeat):
+        [observation, reward, done, info] = client.env_step(action, True)
+            # if done:
+                # break
         if done:
             observation = client.env_reset()
             if not observation:

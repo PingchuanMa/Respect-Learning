@@ -46,6 +46,9 @@ class ProstheticsEnv(env.ProstheticsEnv):
         rew_straight -= param.w_straight * ((state_desc["body_pos"]["pros_tibia_r"][2] - shift_base ) ** 2)
         rew_straight -= param.w_straight * ((state_desc["body_pos"]["tibia_l"][2] + shift_base ) ** 2)
 
+        rew_straight -= param.w_straight * ((state_desc["body_pos"]["pros_foot_r"][2] - shift_base ) ** 2)
+        rew_straight -= param.w_straight * ((state_desc["body_pos"]["talus_l"][2] + shift_base ) ** 2)
+        
         # rew_pose = param.w_pose * (9.0 + np.minimum(state_desc["body_pos"]["head"][0] - state_desc["body_pos"]["pelvis"][0], 0))
         # rew_fall = param.w_fall * (9.0 + np.minimum(state_desc["body_pos"]["head"][1] - state_desc["body_pos"]["pelvis"][1], 0))
 
@@ -55,7 +58,8 @@ class ProstheticsEnv(env.ProstheticsEnv):
         rew_bend_l = np.clip( -state_desc["joint_pos"]["knee_l"][0] , 0 , -self.bend_para)
         rew_bend_r = np.clip( -state_desc["joint_pos"]["knee_r"][0] , 0 , -self.bend_para)
         
-        rew_bend = param.w_bend * (rew_bend_l + rew_bend_r - (rew_bend_l - rew_bend_r) ** 2 )
+        # rew_bend = param.w_bend * (rew_bend_l + rew_bend_r - (rew_bend_l - rew_bend_r) ** 2 )
+        rew_bend = param.w_bend * ( rew_bend_l + rew_bend_r )
 
         # rew_mirror = -param.w_mirror * (state_desc["body_pos"]["head"][2] ** 2)
 
