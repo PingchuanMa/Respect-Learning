@@ -21,7 +21,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def get_observation_space_size(self):
         if self.prosthetic == True:
-            return 334
+            return 248
         return 167
 
     def reward(self):

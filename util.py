@@ -5,7 +5,7 @@ def state_desc_to_ob(state_desc):
 
     for body_part in ["pelvis", "head", "torso", "toes_l", "talus_l", "calcn_l", "tibia_l", "femur_l", "femur_r", "pros_foot_r", "pros_tibia_r"]:
         cur = []
-        for info_type in ["body_pos", "body_vel", "body_acc", "body_pos_rot", "body_vel_rot", "body_acc_rot"]:
+        for info_type in ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"]:
             cur += state_desc[info_type][body_part]
         if body_part == "pelvis":
             pelvis = cur
@@ -13,11 +13,11 @@ def state_desc_to_ob(state_desc):
         else:
             cur_upd = cur
             cur_upd[:3] = [cur[i] - pelvis[i] for i in range(3)]
-            cur_upd[9:12] = [cur[i] - pelvis[i] for i in range(9, 12)]
+            cur_upd[6:9] = [cur[i] - pelvis[i] for i in range(6, 9)]
             res += cur_upd  # manual bug fix for official repo
 
     for joint in ["ankle_l", "ankle_r", "back", "hip_l", "hip_r", "knee_l", "knee_r", "ground_pelvis"]:
-        for info_type in ["joint_pos", "joint_vel", "joint_acc"]:
+        for info_type in ["joint_pos", "joint_vel"]:
             res += state_desc["joint_pos"][joint]
 
     for muscle in sorted(state_desc["muscles"].keys()):
@@ -25,6 +25,6 @@ def state_desc_to_ob(state_desc):
             res += [state_desc["muscles"][muscle][info_type]]
 
     cm_pos = [state_desc["misc"]["mass_center_pos"][i] - pelvis[i] for i in range(3)]
-    res += cm_pos + state_desc["misc"]["mass_center_vel"] + state_desc["misc"]["mass_center_acc"]
+    res += cm_pos + state_desc["misc"]["mass_center_vel"]
 
     return res
