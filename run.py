@@ -108,11 +108,12 @@ def main():
     parser.add_argument('--play', default=False, action='store_true')
     parser.add_argument('--iter', type=str, default='final')
     parser.add_argument('--net', type=int, nargs='+', default=(256, 128, 64))
+    parser.add_argument('--noise', type=float, default=0.0)
     args = parser.parse_args()
 
     def policy_fn(name, ob_space, ac_space):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
-            hid_layer_sizes=args.net)
+            hid_layer_sizes=args.net, noise_std=args.noise)
 
     #tf configs
     ncpu = multiprocessing.cpu_count()
