@@ -20,9 +20,10 @@ from tools.plot_rewards import plot_rewards
 import param
 
 
-def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, cont=False, iter=None, save_final=True, play=False):
+def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, mirror, cont=False, iter=None, save_final=True, play=False):
 
     env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend)
+    env.reset()
 
     if cont:
         assert iter is not None
@@ -81,6 +82,7 @@ def test(identifier, policy_fn, seed, iter):
             observation, r, done, info = env.step(action)
             # print(r)
             r_ori = info['original']
+            print(info['pros_foot'])
             rew = rew * ai / (ai + 1) + r / (ai + 1)
             rew_ori = rew_ori * ai / (ai + 1) + r_ori / (ai + 1)
             if done:
@@ -110,6 +112,7 @@ def main():
     parser.add_argument('--play', default=False, action='store_true')
     parser.add_argument('--iter', type=str, default='final')
     parser.add_argument('--net', type=int, nargs='+', default=(256, 128, 64))
+    parser.add_argument('--mirror', default=False, action='store_true')
     args = parser.parse_args()
 
     def policy_fn(name, ob_space, ac_space):
@@ -127,7 +130,7 @@ def main():
 
     #train/test
     if not args.play:
-        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent)
+        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, mirror=args.mirror)
     else:
         test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter)
 
