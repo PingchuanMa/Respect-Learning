@@ -18,7 +18,7 @@ def state_desc_to_ob(state_desc):
 
     for joint in ["ankle_l", "ankle_r", "back", "hip_l", "hip_r", "knee_l", "knee_r", "ground_pelvis"]:
         for info_type in ["joint_pos", "joint_vel"]:
-            res += state_desc["joint_pos"][joint]
+            res += state_desc[info_type][joint]
 
     for muscle in sorted(state_desc["muscles"].keys()):
         for info_type in ["activation", "fiber_force", "fiber_length", "fiber_velocity"]:
