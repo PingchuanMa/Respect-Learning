@@ -1,3 +1,5 @@
+import copy
+
 def state_desc_to_ob(state_desc):
     # Augmented environment from the L2R challenge
     res = []
@@ -5,31 +7,24 @@ def state_desc_to_ob(state_desc):
 
     for body_part in ["pelvis", "head", "torso", "toes_l", "talus_l", "calcn_l", "tibia_l", "femur_l", "femur_r", "pros_foot_r", "pros_tibia_r"]:
         cur = []
-        cur += state_desc["body_pos"][body_part]
-        cur += state_desc["body_vel"][body_part]
-        cur += state_desc["body_acc"][body_part]
-        cur += state_desc["body_pos_rot"][body_part]
-        cur += state_desc["body_vel_rot"][body_part]
-        cur += state_desc["body_acc_rot"][body_part]
+        for info_type in ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"]:
+            cur += state_desc[info_type][body_part]
         if body_part == "pelvis":
             pelvis = cur
             res += cur
         else:
             cur_upd = cur
             cur_upd[:3] = [cur[i] - pelvis[i] for i in range(3)]
-            cur_upd[9:12] = [cur[i] - pelvis[i] for i in range(9, 12)]
+            cur_upd[6:9] = [cur[i] - pelvis[i] for i in range(6, 9)]
             res += cur_upd  # manual bug fix for official repo
 
     for joint in ["ankle_l", "ankle_r", "back", "hip_l", "hip_r", "knee_l", "knee_r", "ground_pelvis"]:
-        res += state_desc["joint_pos"][joint]
-        res += state_desc["joint_vel"][joint]
-        res += state_desc["joint_acc"][joint]
+        for info_type in ["joint_pos", "joint_vel"]:
+            res += state_desc["joint_pos"][joint]
 
     for muscle in sorted(state_desc["muscles"].keys()):
-        res += [state_desc["muscles"][muscle]["activation"]]
-        res += [state_desc["muscles"][muscle]["fiber_force"]]
-        res += [state_desc["muscles"][muscle]["fiber_length"]]
-        res += [state_desc["muscles"][muscle]["fiber_velocity"]]
+        for info_type in ["activation", "fiber_force", "fiber_length", "fiber_velocity"]:
+            res += [state_desc["muscles"][muscle][info_type]]
 
     cm_pos = [state_desc["misc"]["mass_center_pos"][i] - pelvis[i] for i in range(3)]
     res += cm_pos + state_desc["misc"]["mass_center_vel"]
@@ -38,39 +33,47 @@ def state_desc_to_ob(state_desc):
 
 def state_desc_to_ob_idx(state_desc):
     # Augmented environment from the L2R challenge
+
     res = []
     pelvis = None
 
+    idx_dict = copy.deepcopy(state_desc)
+    shift_factor = []
+    mirror_obs_idx = []
+
+    append_list = lambda x ,y: list(range( x, y ))
+
     for body_part in ["pelvis", "head", "torso", "toes_l", "talus_l", "calcn_l", "tibia_l", "femur_l", "femur_r", "pros_foot_r", "pros_tibia_r"]:
-        cur = []
-        cur += state_desc["body_pos"][body_part]
-        cur += state_desc["body_vel"][body_part]
-        cur += state_desc["body_acc"][body_part]
-        cur += state_desc["body_pos_rot"][body_part]
-        cur += state_desc["body_vel_rot"][body_part]
-        cur += state_desc["body_acc_rot"][body_part]
-        if body_part == "pelvis":
-            pelvis = cur
-            res += cur
+
+        if "_r" in body_part or "_l" in body_part:
+            cur_shift_factor = [1, 1, -1]
         else:
-            cur_upd = cur
-            cur_upd[:3] = [cur[i] - pelvis[i] for i in range(3)]
-            cur_upd[9:12] = [cur[i] - pelvis[i] for i in range(9, 12)]
-            res += cur_upd  # manual bug fix for official repo
+            cur_shift_factor = [1, 1, 1]
+
+        for info_type in ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"]:
+            shift_factor += cur_shift_factor
+            idx_dict["body_pos"][body_part] = append_list( len(mirror_obs_idx), 3 )
+            mirror_obs_idx += append_list( len(mirror_obs_idx) , 3 )
 
     for joint in ["ankle_l", "ankle_r", "back", "hip_l", "hip_r", "knee_l", "knee_r", "ground_pelvis"]:
-        res += state_desc["joint_pos"][joint]
-        res += state_desc["joint_vel"][joint]
-        res += state_desc["joint_acc"][joint]
+        
+        if "_r" in body_part or "_l" in body_part:
+            cur_shift_factor += [1, 1, -1]
+        else:
+            cur_shift_factor += [1, 1, 1]
+
+        for info_type in ["joint_pos", "joint_vel"]:
+            shift_factor += cur_shift_factor
+            mirror_obs_idx += append_list( len(mirror_obs_idx) , 3 )
+            idx_dict[info_type][joint] = append_list( len(mirror_obs_idx), 3 )
 
     for muscle in sorted(state_desc["muscles"].keys()):
-        res += [state_desc["muscles"][muscle]["activation"]]
-        res += [state_desc["muscles"][muscle]["fiber_force"]]
-        res += [state_desc["muscles"][muscle]["fiber_length"]]
-        res += [state_desc["muscles"][muscle]["fiber_velocity"]]
+        for info_type in ["activation", "fiber_force", "fiber_length", "fiber_velocity"]:
+            res += [state_desc["muscles"][muscle][info_type]]
+            idx_dict["muscles"][muscle][info_type]
 
-    cm_pos = [state_desc["misc"]["mass_center_pos"][i] - pelvis[i] for i in range(3)]
-    res += cm_pos + state_desc["misc"]["mass_center_vel"]
+    shift_factor += [1] * 6
+    mirror_obs_idx += append_list( len(mirror_obs_idx) , 6 )
 
     return res
 
