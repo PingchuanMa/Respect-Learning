@@ -66,7 +66,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
 
 def test(identifier, policy_fn, seed, iter):
     
-    pi = train(identifier, policy_fn, 1, 1, seed, save_final=False, play=True)
+    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, save_final=False, play=True)
     load_state(identifier, iter)
     env = TestProstheticsEnv(visualize=True)
 
@@ -79,7 +79,8 @@ def test(identifier, policy_fn, seed, iter):
         rew_ori = 0
         for ai in range(param.action_repeat):
             observation, r, done, info = env.step(action)
-            r_ori = info['rew_ori']
+            # print(r)
+            r_ori = info['original']
             rew = rew * ai / (ai + 1) + r / (ai + 1)
             rew_ori = rew_ori * ai / (ai + 1) + r_ori / (ai + 1)
             if done:
