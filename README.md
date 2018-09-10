@@ -23,3 +23,25 @@ Run run.py for local training and testing, run submit.py for online submission.
 1. Network structure
 2. Activation function (SELU, RELU, ELU, ...)
 3. 1D conv / FC
+
+
+## Action Space
+0   abd_r
+1   add_r
+2   hamstrings_r
+3   bifemsh_r
+4   glut_max_r
+5   iliopsoas_r
+6   rect_fem_r
+7   vasti_r
+8   abd_l
+9   add_l
+10   hamstrings_l
+11   bifemsh_l
+12   glut_max_l
+13   iliopsoas_l
+14   rect_fem_l
+15   vasti_l
+16   gastroc_l
+17   soleus_l
+18   tib_ant_l 
