@@ -45,14 +45,14 @@ class ProstheticsEnv(env.ProstheticsEnv):
         # original right   0.0835
         shift_base = 0.0835
 
-        rew_straight -= param.w_straight * ((state_desc["body_pos"]["femur_r"][2] - shift_base ) ** 2)
-        rew_straight -= param.w_straight * ((state_desc["body_pos"]["femur_l"][2] + shift_base ) ** 2)
+        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["femur_r"][2] - shift_base ) ** 2)
+        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["femur_l"][2] + shift_base ) ** 2)
 
-        rew_straight -= param.w_straight * ((state_desc["body_pos"]["pros_tibia_r"][2] - shift_base ) ** 2)
-        rew_straight -= param.w_straight * ((state_desc["body_pos"]["tibia_l"][2] + shift_base ) ** 2)
+        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["pros_tibia_r"][2] - shift_base ) ** 2)
+        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["tibia_l"][2] + shift_base ) ** 2)
 
-        rew_straight -= param.w_straight * ((state_desc["body_pos"]["pros_foot_r"][2] - shift_base ) ** 2)
-        rew_straight -= param.w_straight * ((state_desc["body_pos"]["talus_l"][2] + shift_base ) ** 2)
+        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["pros_foot_r"][2] - shift_base ) ** 2)
+        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["talus_l"][2] + shift_base ) ** 2)
         
         # rew_pose = param.w_pose * (9.0 + np.minimum(state_desc["body_pos"]["head"][0] - state_desc["body_pos"]["pelvis"][0], 0))
         # rew_fall = param.w_fall * (9.0 + np.minimum(state_desc["body_pos"]["head"][1] - state_desc["body_pos"]["pelvis"][1], 0))
