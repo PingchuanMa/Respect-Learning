@@ -17,13 +17,13 @@ from tools import pposgd_simple
 from tools import mlp_policy
 from tools.utils import *
 from tools.plot_rewards import plot_rewards
+from util import state_desc_to_ob_idx
 import param
 
 
 def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, mirror, cont=False, iter=None, save_final=True, play=False):
 
-    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend)
-    env.reset()
+    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, mirror=mirror)
 
     if cont:
         assert iter is not None
@@ -67,7 +67,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
 
 def test(identifier, policy_fn, seed, iter):
     
-    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, save_final=False, play=True)
+    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, mirror=False, save_final=False, play=True)
     load_state(identifier, iter)
     env = TestProstheticsEnv(visualize=True)
 
@@ -82,7 +82,6 @@ def test(identifier, policy_fn, seed, iter):
             observation, r, done, info = env.step(action)
             # print(r)
             r_ori = info['original']
-            print(info['pros_foot'])
             rew = rew * ai / (ai + 1) + r / (ai + 1)
             rew_ori = rew_ori * ai / (ai + 1) + r_ori / (ai + 1)
             if done:

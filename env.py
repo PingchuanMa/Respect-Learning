@@ -3,13 +3,18 @@ import numpy as np
 from osim import env
 import param
 from util import state_desc_to_ob
+from util import get_mirror_id
 
 class ProstheticsEnv(env.ProstheticsEnv):
 
-    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para = -0.9599310849999999):
+    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para = -0.9599310849999999, mirror=False):
         super().__init__(visualize, integrator_accuracy)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) 
+        # self.mirror_id = None
+        if mirror:
+            self.reset()
+            self.mirror_id = get_mirror_id(self.get_state_desc())
 
     def is_done(self):
         state_desc = self.get_state_desc()
@@ -21,7 +26,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def get_observation_space_size(self):
         if self.prosthetic == True:
-            return 331
+            return 248
         return 167
 
     def reward(self):
