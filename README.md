@@ -26,32 +26,67 @@ Run run.py for local training and testing, run submit.py for online submission.
 
 
 ## Observation Space
+
+### Forces
+
+dimensions for "foot_l" and "pros_foot_r" are different
+
+the previous one has 18 elements, the following one has 24 elements
+
+While using the mirror mode, the elements for toe1 and toe2 will be squeezed to align with the pros_foot_r
+ 
 ### Extended Observation space
+
 duplicate info of pros leg for left part of the model
+
 duplicate info of right leg for right part of the model
+
 
 ## Action Space
 0   abd_r
+
 1   add_r
+
 2   hamstrings_r
+
 3   bifemsh_r
+
 4   glut_max_r
+
 5   iliopsoas_r
+
 6   rect_fem_r
+
 7   vasti_r
+
 8   abd_l
+
 9   add_l
+
 10   hamstrings_l
+
 11   bifemsh_l
+
 12   glut_max_l
+
 13   iliopsoas_l
+
 14   rect_fem_l
+
 15   vasti_l
+
 16   gastroc_l
+
 17   soleus_l
+
 18   tib_ant_l 
+
 
 ### Extended Action Space
 19   gastroc_r
+
 20   soleus_r
+
 21   tib_ant_r 
+
+
