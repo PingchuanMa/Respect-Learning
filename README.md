@@ -25,6 +25,11 @@ Run run.py for local training and testing, run submit.py for online submission.
 3. 1D conv / FC
 
 
+## Observation Space
+### Extended Observation space
+duplicate info of pros leg for left part of the model
+duplicate info of right leg for right part of the model
+
 ## Action Space
 0   abd_r
 1   add_r
@@ -45,3 +50,8 @@ Run run.py for local training and testing, run submit.py for online submission.
 16   gastroc_l
 17   soleus_l
 18   tib_ant_l 
+
+### Extended Action Space
+19   gastroc_r
+20   soleus_r
+21   tib_ant_r 

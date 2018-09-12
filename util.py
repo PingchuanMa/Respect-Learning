@@ -1,12 +1,29 @@
 import copy
 import numpy as np
 
-def state_desc_to_ob(state_desc):
+def state_desc_to_ob(state_desc, mirror=False):
     # Augmented environment from the L2R challenge
     res = []
     pelvis = None
 
-    for body_part in ["pelvis", "head", "torso", "toes_l", "talus_l", "calcn_l", "tibia_l", "femur_l", "femur_r", "pros_foot_r", "pros_tibia_r"]:
+    if mirror:
+        for body_part in ["toes_l", "talus_l", "calcn_l", "tibia_l", "pros_foot_r", "pros_tibia_r"]:
+            mirror_name = (body_part[:-1] + "r" ) if body_part[-1] == 'l' else (body_part[:-1] + "l" )
+            for info_type in ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"]:
+                state_desc[info_type][mirror_name] = copy.deepcopy(state_desc[info_type][body_part])
+                state_desc[info_type][mirror_name][2] *= -1 
+        
+        for muscle in ['gastroc_l', 'soleus_l', 'tib_ant_l']:
+            mirror_name = muscle[:-1] + "r" 
+            state_desc['muscles'][mirror_name] = copy.deepcopy(state_desc["muscles"][muscle])
+
+    if mirror:
+        body_list = ["pelvis", "head", "torso", "toes_l", "toes_r", "talus_l", "talus_r", "calcn_l", "calcn_r", \
+            "tibia_l", "tibia_r", "femur_l", "femur_r", "pros_foot_l", "pros_foot_r", "pros_tibia_l", "pros_tibia_r"]
+    else:
+        body_list = ["pelvis", "head", "torso", "toes_l", "talus_l", "calcn_l", "tibia_l", "femur_l", "femur_r", "pros_foot_r", "pros_tibia_r"]
+
+    for body_part in body_list:
         cur = []
         for info_type in ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"]:
             cur += state_desc[info_type][body_part]
@@ -29,7 +46,6 @@ def state_desc_to_ob(state_desc):
 
     cm_pos = [state_desc["misc"]["mass_center_pos"][i] - pelvis[i] for i in range(3)]
     res += cm_pos + state_desc["misc"]["mass_center_vel"]
-
     return np.array(res)
 
 def state_desc_to_ob_idx(state_desc):
@@ -43,8 +59,10 @@ def state_desc_to_ob_idx(state_desc):
 
     idx_dict["body_part"] = {}
 
-    for body_part in ["pelvis", "head", "torso", "toes_l", "talus_l", "calcn_l", "tibia_l", "femur_l", "femur_r", "pros_foot_r", "pros_tibia_r"]:
+    body_list = ["pelvis", "head", "torso", "toes_l", "toes_r", "talus_l", "talus_r", "calcn_l", "calcn_r", \
+        "tibia_l", "tibia_r", "femur_l", "femur_r", "pros_foot_l", "pros_foot_r", "pros_tibia_l", "pros_tibia_r"]
 
+    for body_part in body_list:
         # ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"] total 4 * 3 items
         if "_r" in body_part or "_l" in body_part:
             shift_factor += [1, 1, -1] * 4
@@ -122,7 +140,7 @@ def get_mirror_id( state_desc ):
     # 0  ~ 7  right
     # 8  ~ 15 left
     # 16 ~ 18 left only
-    act_idx = [ 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18 ]
+    act_idx = [ 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 19, 20, 21, 16, 17, 18 ]
     ob_idx, shift_factor = state_desc_to_ob_idx( state_desc )
     
     return  np.array(ob_idx), np.array(act_idx), np.array(shift_factor)
