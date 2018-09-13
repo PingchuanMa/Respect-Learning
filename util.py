@@ -10,12 +10,13 @@ def state_desc_to_ob(state_desc, mirror=False):
         for body_part in ["toes_l", "talus_l", "calcn_l", "tibia_l", "pros_foot_r", "pros_tibia_r"]:
             mirror_name = (body_part[:-1] + "r" ) if body_part[-1] == 'l' else (body_part[:-1] + "l" )
             for info_type in ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"]:
-                state_desc[info_type][mirror_name] = copy.deepcopy(state_desc[info_type][body_part])
-                state_desc[info_type][mirror_name][2] *= -1 
+                state_desc[info_type][mirror_name] = [ 0 ] * len(state_desc[info_type][body_part])
         
         for muscle in ['gastroc_l', 'soleus_l', 'tib_ant_l']:
             mirror_name = muscle[:-1] + "r" 
             state_desc['muscles'][mirror_name] = copy.deepcopy(state_desc["muscles"][muscle])
+            for item in state_desc['muscles'][mirror_name]:
+                state_desc['muscles'][mirror_name][item] = 0
         
         if "pros_foot_r_0" in state_desc["forces"]:
             state_desc["forces"]["foot_r"] = copy.deepcopy( state_desc["forces"]['pros_foot_r_0'] )
@@ -26,7 +27,7 @@ def state_desc_to_ob(state_desc, mirror=False):
 
         for force in ['gastroc_l', 'soleus_l', 'tib_ant_l']:
             mirror_name = force[:-1] + "r" 
-            state_desc['forces'][mirror_name] = copy.deepcopy(state_desc["forces"][force])
+            state_desc['forces'][mirror_name] = [0]
 
     if mirror:
         body_list = ["pelvis", "head", "torso", "toes_l", "toes_r", "talus_l", "talus_r", "calcn_l", "calcn_r", \

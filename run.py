@@ -65,11 +65,11 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
     return pi
 
 
-def test(identifier, policy_fn, seed, iter):
+def test(identifier, policy_fn, seed, iter, mirror):
     
-    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, mirror=False, save_final=False, play=True)
+    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, mirror=mirror, save_final=False, play=True)
     load_state(identifier, iter)
-    env = TestProstheticsEnv(visualize=True)
+    env = TestProstheticsEnv(visualize=True, mirror=mirror)
 
     observation = env.reset()
     reward = 0
@@ -131,7 +131,7 @@ def main():
     if not args.play:
         train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, mirror=args.mirror)
     else:
-        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter)
+        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror)
 
 
 if __name__ == '__main__':
