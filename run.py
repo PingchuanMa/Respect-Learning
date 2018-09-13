@@ -20,9 +20,10 @@ from tools.plot_rewards import plot_rewards
 import param
 
 
-def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, cont=False, iter=None, save_final=True, play=False):
+def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, reward_version,
+    cont=False, iter=None, save_final=True, play=False):
 
-    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend)
+    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, reward_version=reward_version)
 
     if cont:
         assert iter is not None
@@ -64,11 +65,11 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, cont
     return pi
 
 
-def test(identifier, policy_fn, seed, iter):
+def test(identifier, policy_fn, seed, iter, reward_version):
     
     pi = train(identifier, policy_fn, 1, 1, seed, save_final=False, play=True)
     load_state(identifier, iter)
-    env = TestProstheticsEnv(visualize=True)
+    env = TestProstheticsEnv(visualize=True, reward_version=reward_version)
 
     observation = env.reset()
     reward = 0
@@ -111,6 +112,7 @@ def main():
     parser.add_argument('--noise', type=float, default=0.2)
     parser.add_argument('--layer_norm', default=True, action='store_true')
     parser.add_argument('--activation', type=str, default='selu')
+    parser.add_argument('--reward', type=int, default=0)
     args = parser.parse_args()
 
     def policy_fn(name, ob_space, ac_space):
@@ -128,9 +130,10 @@ def main():
 
     #train/test
     if not args.play:
-        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend)
+        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, 
+            seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, reward_version=args.reward)
     else:
-        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter)
+        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, reward_version=args.reward)
 
 
 if __name__ == '__main__':

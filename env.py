@@ -3,13 +3,16 @@ import numpy as np
 from osim import env
 import param
 from util import state_desc_to_ob
+from reward import Reward
 
 class ProstheticsEnv(env.ProstheticsEnv):
 
-    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para = -0.9599310849999999):
+    def __init__(self, visualize=True, integrator_accuracy=5e-5, bend_para=-0.4, reward_version=0):
         super().__init__(visualize, integrator_accuracy)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) 
+        self.reward_set = Reward(self.bend_para, self.bend_base)
+        self.reward_func = getattr(self.reward_set, 'v' + str(reward_version))
 
     def is_done(self):
         state_desc = self.get_state_desc()
@@ -31,15 +34,11 @@ class ProstheticsEnv(env.ProstheticsEnv):
             return 0
         rew_ori = 9.0 - (state_desc["body_vel"]["pelvis"][0] - 3.0) ** 2
         rew_speed = param.w_speed * rew_ori
-        rew_straight = -param.w_straight * (state_desc["body_pos"]["pelvis"][2] ** 2)
-        # rew_bend_l = np.exp( - np.square(state_desc["joint_pos"]["knee_l"][0] - self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) - self.bend_base
-        # rew_bend_r = np.exp( - np.square(state_desc["joint_pos"]["knee_r"][0] - self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) - self.bend_base
-        # rew_bend = param.w_bend * (rew_bend_l + rew_bend_r )
-
-        rew_total = rew_speed + rew_straight
+        rew_all = self.reward_func(state_desc)
+        rew_all['speed'] = rew_speed
+        rew_total = sum(rew_all.values())
         rew_total = param.rew_scale * (rew_total + param.rew_const)
-
-        rew_all = {'original': rew_ori, 'speed': rew_speed, 'straight': rew_straight}
+        rew_all['original'] = rew_ori
         return rew_total, rew_all
 
     def step(self, action, project = True):
