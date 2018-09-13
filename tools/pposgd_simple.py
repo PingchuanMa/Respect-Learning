@@ -140,6 +140,7 @@ def learn(env, policy_fn, *,
           save_result=True,
           save_interval=100,
           reward_list=[],
+          reward_ori_list=[],
           cont=False,
           iter, play, action_repeat=1):
     # Setup losses and stuff
@@ -313,9 +314,13 @@ def learn(env, policy_fn, *,
             logger.dump_tabular()
 
             reward_list.append(np.mean(rewbuffer))
+            if rewbuffer_all:
+                reward_ori_list.append(np.mean(rewbuffer_all['original']))
             if save_result and iters_so_far % save_interval == 0:
                 save_state(identifier, iters_so_far)
                 save_rewards(reward_list, identifier, iters_so_far)
+                if rewbuffer_all:
+                    save_rewards(reward_ori_list, identifier + '_ori', iters_so_far)
                 logger.log('Model and reward saved')
 
     return pi

@@ -21,15 +21,17 @@ import param
 
 
 def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, reward_version,
-    cont=False, iter=None, save_final=True, play=False):
+    cont=False, iter=None, play=False):
 
     env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, reward_version=reward_version)
 
     if cont:
         assert iter is not None
         reward_list = load_rewards(identifier, iter)
+        reward_ori_list = load_rewards(identifier + '_ori', iter)
     else:
         reward_list = []
+        reward_ori_list = []
 
     set_global_seeds(seed + MPI.COMM_WORLD.Get_rank())
     timesteps_per_actorbatch = np.ceil(steps_per_iter / MPI.COMM_WORLD.Get_size()).astype(int)
@@ -49,25 +51,19 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, rewa
                              save_result=True,
                              save_interval=50,
                              reward_list=reward_list,
+                             reward_ori_list=reward_ori_list,
                              cont=cont,
                              play=play,
                              iter=iter,
                              action_repeat=param.action_repeat)
     env.close()
 
-    if save_final:
-        #save states in the end
-        curr_time = datetime.datetime.now().strftime('%y%m%d%H%M%S')
-        save_rewards(reward_list, identifier, 'final')
-        plot_rewards(reward_list, identifier)
-        save_state(identifier, 'final')
-
     return pi
 
 
 def test(identifier, policy_fn, seed, iter, reward_version):
     
-    pi = train(identifier, policy_fn, 1, 1, seed, save_final=False, play=True)
+    pi = train(identifier, policy_fn, 1, 1, seed, play=True)
     load_state(identifier, iter)
     env = TestProstheticsEnv(visualize=True, reward_version=reward_version)
 
