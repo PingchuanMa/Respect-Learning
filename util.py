@@ -24,6 +24,9 @@ def state_desc_to_ob(state_desc):
         for info_type in ["activation", "fiber_force", "fiber_length", "fiber_velocity"]:
             res += [state_desc["muscles"][muscle][info_type]]
 
+    for body_part in sorted(state_desc["forces"].keys()):
+        res += state_desc["forces"][body_part]
+
     cm_pos = [state_desc["misc"]["mass_center_pos"][i] - pelvis[i] for i in range(3)]
     res += cm_pos + state_desc["misc"]["mass_center_vel"]
 

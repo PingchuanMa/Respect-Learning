@@ -9,7 +9,7 @@ from baselines.common.distributions import make_pdtype
 
 class MlpPolicy(mlp_policy.MlpPolicy):
 
-    def _init(self, ob_space, ac_space, hid_layer_sizes, gaussian_fixed_var=True, noise_std=0.0, layer_norm=False):
+    def _init(self, ob_space, ac_space, hid_layer_sizes, gaussian_fixed_var=True, noise_std=0.0, layer_norm=False, activation=tf.nn.relu):
         assert isinstance(ob_space, gym.spaces.Box)
 
         self.pdtype = pdtype = make_pdtype(ac_space)
@@ -24,7 +24,7 @@ class MlpPolicy(mlp_policy.MlpPolicy):
             obz = tf.clip_by_value((ob - self.ob_rms.mean) / self.ob_rms.std, -5.0, 5.0)
             last_out = obz
             for i, size in enumerate(hid_layer_sizes):
-                last_out = tf.nn.relu(tf.layers.dense(last_out, size, name="fc%i" % (i + 1),
+                last_out = activation(tf.layers.dense(last_out, size, name="fc%i" % (i + 1),
                                                       kernel_initializer=U.normc_initializer(1.0)))
             self.vpred = tf.layers.dense(last_out, 1, name='final', kernel_initializer=U.normc_initializer(1.0))[:, 0]
 
@@ -36,7 +36,7 @@ class MlpPolicy(mlp_policy.MlpPolicy):
                 if layer_norm:
                     last_out = tc.layers.layer_norm(last_out, center=True, scale=True)
                 noise = tf.random_normal(shape=tf.shape(last_out), mean=0.0, stddev=noise_std, dtype=tf.float32)
-                last_out = tf.nn.relu(last_out + noise)
+                last_out = activation(last_out + noise)
             if gaussian_fixed_var and isinstance(ac_space, gym.spaces.Box):
                 mean = tf.layers.dense(last_out, pdtype.param_shape()[0]//2, name='final',
                                        kernel_initializer=U.normc_initializer(0.01))
