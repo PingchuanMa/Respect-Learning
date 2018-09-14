@@ -94,6 +94,8 @@ def test(identifier, policy_fn, seed, iter, reward_version):
 
 def main():
 
+    print('Hello, I\'m #%d/%d.' % (MPI.COMM_WORLD.Get_rank(), MPI.COMM_WORLD.Get_size()))
+
     logger.configure()
     parser = argparse.ArgumentParser(description='Train.')
     parser.add_argument('--id', type=str, default='origin')
