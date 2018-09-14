@@ -37,6 +37,5 @@ jobname=TEST
 step_per_iter=512
 log_dir=../log/${identifier}-$( { date +"%H:%M:%S-%h_%d_%y"; } 2>&1 ).log
 
-OMP_NUM_THREADS=1 srun -p ${machines} --gres=gpu:${num_gpus} -n ${num_cpus} --cpus-per-task=2 --job-name=${jobname} --mpi=pmi2 --kill-on-bad-exit=1 \
-${python} -u ../run.py --step_per_iter=${step_per_iter} --id=${identifier} \
-       2>&1|tee ${log_dir} &\
+OMP_NUM_THREADS=1 srun -p ${machines} --gres=gpu:${num_gpus} -n ${num_cpus} -c 1 --job-name=${jobname} --mpi=pmi2 --kill-on-bad-exit=1 \
+${python} -u ../run.py --step_per_iter=${step_per_iter} --id=${identifier} 2>&1|tee ${log_dir} &\
