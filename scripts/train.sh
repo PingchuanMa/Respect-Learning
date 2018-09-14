@@ -38,6 +38,6 @@ step_per_iter=512
 log_dir=../log/.log
 OMP_NUM_THREADS=1
 
-srun -p ${machines} --gres=gpu:${num_gpus} -n=${num_cpus} --job-name=${jobname} --mpi=pmi2 --kill-on-bad-exit=1 \
+srun -p ${machines} --gres=gpu:${num_gpus} -n${num_cpus} --job-name=${jobname} --mpi=pmi2 --kill-on-bad-exit=1 \
 ${python} -u ../run.py --step_per_iter=${step_per_iter} --id=${origin}
        2>&1|tee ${log_dir} &\
