@@ -7,7 +7,7 @@ from baselines.common.mpi_adam import MpiAdam
 from baselines.common.mpi_moments import mpi_moments
 from mpi4py import MPI
 from collections import deque, OrderedDict
-from tools.utils import save_state, save_rewards, load_state
+from tools.utils import save_state, save_rewards, load_state, get_tb_writer, tb_summary, close_tb_writer
 
 
 def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_repeat=1):
@@ -145,6 +145,7 @@ def learn(env, policy_fn, *,
           iter, play, action_repeat=1):
     # Setup losses and stuff
     # ----------------------------------------
+    writer = get_tb_writer(identifier)
     ob_space = env.observation_space
     ac_space = env.action_space
     mirror = hasattr(env, 'mirror_id')
@@ -298,10 +299,13 @@ def learn(env, policy_fn, *,
                 rewbuffer_all[name] = deque(maxlen=100)
             rewbuffer_all[name].extend(rews_i)
         logger.record_tabular("EpLenMean", np.mean(lenbuffer))
+        tb_summary(writer, "EpisodeLength", np.mean(lenbuffer), iters_so_far, "General")
         logger.record_tabular("EpRewMean", np.mean(rewbuffer))
+        tb_summary(writer, "TotalReward", np.mean(rewbuffer), iters_so_far, "General")
         if rewbuffer_all:
             for name, val in rewbuffer_all.items():
                 logger.record_tabular("EpRewMean(" + name + ")", np.mean(rewbuffer_all[name]))
+                tb_summary(writer, name, np.mean(rewbuffer_all[name]), iters_so_far, "Reward")
         logger.record_tabular("EpThisIter", len(lens))
         episodes_so_far += len(lens)
         timesteps_so_far += sum(lens)
@@ -323,6 +327,7 @@ def learn(env, policy_fn, *,
                     save_rewards(reward_ori_list, identifier + '_ori', iters_so_far)
                 logger.log('Model and reward saved')
 
+    close_tb_writer(writer)
     return pi
 
 
