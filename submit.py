@@ -31,12 +31,14 @@ def submit(identifier, policy_fn, seed, iter, mirror):
     observation = client.env_create(crowdai_token, env_id="ProstheticsEnv")
 
     # IMPLEMENTATION OF YOUR CONTROLLER
-    pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, save_final=False, play=True, bend=0, ent=0)
+    pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, save_final=False, play=True, bend=0, ent=0, symcoeff=0)
     load_state(identifier, iter)
 
     while True:
         ob = state_desc_to_ob(observation, mirror=mirror)
         action = pi.act(False, np.array(ob))[0].tolist()
+        if mirror:
+            action = action[:-3]
         # for _ in range(param.action_repeat):
         [observation, reward, done, info] = client.env_step(action, True)
             # if done:

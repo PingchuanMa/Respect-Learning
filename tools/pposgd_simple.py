@@ -130,6 +130,7 @@ def add_vtarg_and_adv(seg, gamma, lam):
 def learn(env, policy_fn, *,
           timesteps_per_actorbatch,  # timesteps per actor per update
           clip_param, entcoeff,  # clipping parameter epsilon, entropy coeff
+          symcoeff,
           optim_epochs, optim_stepsize, optim_batchsize,  # optimization hypers
           gamma, lam,  # advantage estimation
           max_timesteps=0, max_episodes=0, max_iters=0, max_seconds=0,  # time constraint
@@ -173,7 +174,7 @@ def learn(env, policy_fn, *,
     surr2 = tf.clip_by_value(ratio, 1.0 - clip_param, 1.0 + clip_param) * atarg #
     pol_surr = - tf.reduce_mean(tf.minimum(surr1, surr2)) # PPO's pessimistic surrogate (L^CLIP)
     vf_loss = tf.reduce_mean(tf.square(pi.vpred - ret))
-    sym_loss = 4 * tf.reduce_mean(tf.square(ac - mirror_ac)) if mirror else 0
+    sym_loss = symcoeff * 4 * tf.reduce_mean(tf.square(ac - mirror_ac)) if mirror else 0
     total_loss = pol_surr + pol_entpen + vf_loss + sym_loss
 
     losses = [pol_surr, pol_entpen, vf_loss, meankl, meanent]
@@ -278,8 +279,8 @@ def learn(env, policy_fn, *,
             losses.append(newlosses)
         meanlosses,_,_ = mpi_moments(losses, axis=0)
 
-        # for (lossval, name) in zipsame(meanlosses, loss_names):
-        #     logger.record_tabular("loss_"+name, lossval)
+        for (lossval, name) in zipsame(meanlosses, loss_names):
+            logger.record_tabular("loss_"+name, lossval)
         # logger.record_tabular("ev_tdlam_before", explained_variance(vpredbefore, tdlamret))
         lrlocal = [seg["ep_lens"], seg["ep_rets"]] # local values
         names = []

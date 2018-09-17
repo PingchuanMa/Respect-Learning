@@ -21,7 +21,7 @@ from util import state_desc_to_ob_idx
 import param
 
 
-def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, mirror, cont=False, iter=None, save_final=True, play=False):
+def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, symcoeff, mirror, cont=False, iter=None, save_final=True, play=False):
 
     env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, mirror=mirror)
 
@@ -39,6 +39,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
                              max_timesteps=num_timesteps,
                              timesteps_per_actorbatch=timesteps_per_actorbatch,
                              clip_param=0.2, entcoeff=ent,
+                             symcoeff= symcoeff,
                              optim_epochs=10,
                              optim_stepsize=3e-4,
                              optim_batchsize=64,
@@ -67,7 +68,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
 
 def test(identifier, policy_fn, seed, iter, mirror):
     
-    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, mirror=mirror, save_final=False, play=True)
+    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror, save_final=False, play=True)
     load_state(identifier, iter)
     env = TestProstheticsEnv(visualize=True, mirror=mirror)
 
@@ -105,6 +106,7 @@ def main():
     parser.add_argument('--step', type=int, default=1e9)
     parser.add_argument('--bend', type=float, default=-0.9599310849999999)
     parser.add_argument('--ent', type=float, default=0.001)
+    parser.add_argument('--sym', type=float, default=0.001)
     parser.add_argument('--step_per_iter', type=int, default=16384)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--cont', default=False, action='store_true')
@@ -129,7 +131,7 @@ def main():
 
     #train/test
     if not args.play:
-        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, mirror=args.mirror)
+        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym, mirror=args.mirror)
     else:
         test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror)
 
