@@ -75,17 +75,9 @@ class ProstheticsEnv(env.ProstheticsEnv):
         
         rew_bend = param.w_bend * ( rew_bend_l + rew_bend_r )
 
-        rew_lean_back = -param.w_lean_back * np.clip( 
-            ( state_desc["body_pos"]["pelvis"][0] - state_desc["body_pos"]["torso"][0] ) ,
-            a_min = 0, a_max=None )
-
-        rew_lean_back -= param.w_lean_back * np.clip( 
-            ( state_desc["body_pos"]["pelvis"][0] - state_desc["body_pos"]["head"][0] ) ,
-            a_min = 0, a_max=None )
-
         # rew_mirror = -param.w_mirror * (state_desc["body_pos"]["head"][2] ** 2)
 
-        rew_total = rew_speed + rew_straight + rew_bend + rew_lean_back
+        rew_total = rew_speed + rew_straight + rew_bend
         
         rew_total = param.rew_scale * (rew_total + param.rew_const)
 
