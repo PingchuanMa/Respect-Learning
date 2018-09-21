@@ -52,26 +52,16 @@ class ProstheticsEnv(env.ProstheticsEnv):
         rew_straight -= param.w_straight * (state_desc["body_pos"]["head"][2] ** 2)
         rew_straight -= param.w_straight * (state_desc["body_pos"]["torso"][2] ** 2)
 
-        # original left   -0.0835
-        # original right   0.0835
-        shift_base = 0.0835
-
-        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["femur_r"][2] - shift_base ) ** 2)
-        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["femur_l"][2] + shift_base ) ** 2)
-
-        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["pros_tibia_r"][2] - shift_base ) ** 2)
-        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["tibia_l"][2] + shift_base ) ** 2)
-
-        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["pros_foot_r"][2] - shift_base ) ** 2)
-        rew_straight -= 1.0 / 6 * param.w_straight * ((state_desc["body_pos"]["talus_l"][2] + shift_base ) ** 2)
-        
         # rew_pose = param.w_pose * (9.0 + np.minimum(state_desc["body_pos"]["head"][0] - state_desc["body_pos"]["pelvis"][0], 0))
         # rew_fall = param.w_fall * (9.0 + np.minimum(state_desc["body_pos"]["head"][1] - state_desc["body_pos"]["pelvis"][1], 0))
 
-        rew_bend_l = max( min( -state_desc["joint_pos"]["knee_l"][0] ,
-                     state_desc["joint_pos"]["knee_l"][0] - 2 * self.bend_para ), 0. )
-        rew_bend_r = max( min( -state_desc["joint_pos"]["knee_r"][0] ,
-                     state_desc["joint_pos"]["knee_r"][0] - 2 * self.bend_para ), 0. )
+        # rew_bend_l = max( min( -state_desc["joint_pos"]["knee_l"][0] ,
+        #              state_desc["joint_pos"]["knee_l"][0] - 2 * self.bend_para ), 0. )
+        # rew_bend_r = max( min( -state_desc["joint_pos"]["knee_r"][0] ,
+        #              state_desc["joint_pos"]["knee_r"][0] - 2 * self.bend_para ), 0. )
+
+        rew_bend_l = np.clip( -state_desc["joint_pos"]["knee_l"][0] , 0 , -self.bend_para)
+        rew_bend_r = np.clip( -state_desc["joint_pos"]["knee_r"][0] , 0 , -self.bend_para)
         
         rew_bend = param.w_bend * ( rew_bend_l + rew_bend_r )
 
