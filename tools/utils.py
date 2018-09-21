@@ -45,13 +45,17 @@ def save_rewards(reward_list, identifier, iters_so_far):
     reward_list = np.array(reward_list).tolist()
     save_path = result_path + "reward/"
     os.makedirs(save_path, exist_ok=True)
-    with open(save_path + identifier + '_' + str(iters_so_far) + ".json", "w") as f:
+    file_path = save_path + identifier + '_' + str(iters_so_far) + ".json"
+    with open(file_path, "w") as f:
         json.dump(reward_list, f)
 
 
 def load_rewards(identifier, iters_so_far):
     load_path = result_path + "reward/"
-    with open(load_path + identifier + '_' + str(iters_so_far) + '.json', 'r') as f:
+    file_path = load_path + identifier + '_' + str(iters_so_far) + '.json'
+    if not os.path.isfile(file_path):
+        return []
+    with open(file_path, 'r') as f:
         reward_list = json.load(f)
     return reward_list
 

@@ -21,15 +21,18 @@ from util import state_desc_to_ob_idx
 import param
 
 
-def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, symcoeff, mirror, cont=False, iter=None, save_final=True, play=False):
+def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, symcoeff, mirror, reward_version,
+    cont=False, iter=None, play=False):
 
-    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, mirror=mirror)
+    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, mirror=mirror, reward_version=reward_version)
 
     if cont:
         assert iter is not None
         reward_list = load_rewards(identifier, iter)
+        reward_ori_list = load_rewards(identifier + '_ori', iter)
     else:
         reward_list = []
+        reward_ori_list = []
 
     set_global_seeds(seed + MPI.COMM_WORLD.Get_rank())
     timesteps_per_actorbatch = np.ceil(steps_per_iter / MPI.COMM_WORLD.Get_size()).astype(int)
@@ -50,27 +53,23 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
                              save_result=True,
                              save_interval=50,
                              reward_list=reward_list,
+                             reward_ori_list=reward_ori_list,
                              cont=cont,
                              play=play,
                              iter=iter,
                              action_repeat=param.action_repeat)
     env.close()
 
-    if save_final:
-        #save states in the end
-        curr_time = datetime.datetime.now().strftime('%y%m%d%H%M%S')
-        save_rewards(reward_list, identifier, 'final')
-        plot_rewards(reward_list, identifier)
-        save_state(identifier, 'final')
-
     return pi
 
 
-def test(identifier, policy_fn, seed, iter, mirror):
+def test(identifier, policy_fn, seed, iter, mirror, reward_version):
     
     pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror, save_final=False, play=True)
     load_state(identifier, iter)
-    env = TestProstheticsEnv(visualize=True, mirror=mirror)
+    env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version)
+
+    # pi = train(identifier, policy_fn, 1, 1, seed, play=True)
 
     observation = env.reset()
     reward = 0
@@ -80,9 +79,8 @@ def test(identifier, policy_fn, seed, iter, mirror):
         rew = 0
         rew_ori = 0
         for ai in range(param.action_repeat):
-            observation, r, done, info = env.step(action)
-            # print(r)
-            r_ori = info['original']
+            observation, r, done, r_all = env.step(action)
+            r_ori = r_all['original']
             rew = rew * ai / (ai + 1) + r / (ai + 1)
             rew_ori = rew_ori * ai / (ai + 1) + r_ori / (ai + 1)
             if done:
@@ -114,11 +112,15 @@ def main():
     parser.add_argument('--iter', type=str, default='final')
     parser.add_argument('--net', type=int, nargs='+', default=(256, 128, 64))
     parser.add_argument('--mirror', default=False, action='store_true')
+    parser.add_argument('--noise', type=float, default=0.2)
+    parser.add_argument('--layer_norm', default=True, action='store_true')
+    parser.add_argument('--activation', type=str, default='selu')
+    parser.add_argument('--reward', type=int, default=0)
     args = parser.parse_args()
 
     def policy_fn(name, ob_space, ac_space):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
-            hid_layer_sizes=args.net)
+            hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
 
     #tf configs
     ncpu = multiprocessing.cpu_count()
@@ -131,9 +133,11 @@ def main():
 
     #train/test
     if not args.play:
-        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym, mirror=args.mirror)
+        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter,
+            seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym, mirror=args.mirror, reward_version=args.reward)
     else:
-        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror)
+        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror, reward_version=args.reward)
+
 
 
 if __name__ == '__main__':
