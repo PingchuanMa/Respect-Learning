@@ -31,7 +31,7 @@ def submit(identifier, policy_fn, seed, iter, mirror):
     observation = client.env_create(crowdai_token, env_id="ProstheticsEnv")
 
     # IMPLEMENTATION OF YOUR CONTROLLER
-    pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, save_final=False, play=True, bend=0, ent=0, symcoeff=0)
+    pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, play=True, bend=0, ent=0, symcoeff=0, reward_version=0)
     load_state(identifier, iter)
 
     while True:
@@ -59,11 +59,19 @@ def main():
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--iter', type=str, default='final')
     parser.add_argument('--mirror', default=False, action='store_true')
+    parser.add_argument('--layer_norm', default=True, action='store_true')
+    parser.add_argument('--activation', type=str, default='selu')
+    parser.add_argument('--noise', type=float, default=0.2)
+    
     args = parser.parse_args()
+
+    # def policy_fn(name, ob_space, ac_space):
+    #     return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
+    #         hid_layer_sizes=args.net)
 
     def policy_fn(name, ob_space, ac_space):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
-            hid_layer_sizes=args.net)
+            hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
 
     #tf configs
     ncpu = multiprocessing.cpu_count()

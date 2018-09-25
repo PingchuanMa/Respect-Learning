@@ -102,7 +102,7 @@ def main():
     parser = argparse.ArgumentParser(description='Train.')
     parser.add_argument('--id', type=str, default='origin')
     parser.add_argument('--step', type=int, default=1e9)
-    parser.add_argument('--bend', type=float, default=-0.9599310849999999)
+    parser.add_argument('--bend', type=float, default=-0.4)
     parser.add_argument('--ent', type=float, default=0.001)
     parser.add_argument('--sym', type=float, default=0.001)
     parser.add_argument('--step_per_iter', type=int, default=16384)

@@ -44,3 +44,19 @@ class Reward():
             np.maximum((state_desc["body_pos"]["pelvis"][0] - state_desc["body_pos"]["head"][0]), 0))
         rew_all = {'straight': rew_straight, 'bend': rew_bend, 'lean_back': rew_lean_back}
         return rew_all
+
+    def v4(self, state_desc):
+        shift_base = 0.0835
+        rew_straight = -param.w_straight * (
+            (state_desc["body_pos"]["pelvis"][2] ** 2) +
+            (state_desc["body_pos"]["head"][2] ** 2) +
+            (state_desc["body_pos"]["torso"][2] ** 2))
+
+        rew_bend = param.w_bend * (
+                max( min( -state_desc["joint_pos"]["knee_l"][0] ,
+                     state_desc["joint_pos"]["knee_l"][0] - 2 * self.bend_para ), 0. ) + 
+                max( min( -state_desc["joint_pos"]["knee_r"][0] ,
+                     state_desc["joint_pos"]["knee_r"][0] - 2 * self.bend_para ), 0. ))
+
+        rew_all = {'straight': rew_straight, 'bend': rew_bend}
+        return rew_all

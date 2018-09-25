@@ -94,7 +94,7 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
         cur_ep_len += 1
         if not ep_rets_all and cur_ep_ret_all:
             for name in cur_ep_ret_all.keys():
-                ep_rets_all[name] = []fsave
+                ep_rets_all[name] = []
         if new:
             ep_rets.append(cur_ep_ret)
             if ep_rets_all:
