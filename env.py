@@ -39,8 +39,8 @@ class ProstheticsEnv(env.ProstheticsEnv):
     def get_observation_space_size(self):
         if self.prosthetic == True:
             if self.mirror:
-                return 407
-            return 326
+                return 404
+            return 323
         return 167
 
     def reward(self):

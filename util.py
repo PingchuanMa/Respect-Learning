@@ -41,7 +41,7 @@ def state_desc_to_ob(state_desc, mirror=False):
             cur += state_desc[info_type][body_part]
         if body_part == "pelvis":
             pelvis = cur
-            res += cur
+            res += cur[3:]
         else:
             cur_upd = cur
             cur_upd[:3] = [cur[i] - pelvis[i] for i in range(3)]
@@ -74,7 +74,12 @@ def state_desc_to_ob_idx(state_desc):
 
     idx_dict["body_part"] = {}
 
-    body_list = ["pelvis", "head", "torso", "toes_l", "toes_r", "talus_l", "talus_r", "calcn_l", "calcn_r", \
+    # "pelvis"
+    shift_factor += [1, 1, 1] * 3
+    idx_dict["body_part"]["pelvis"] = len(mirror_obs_idx)
+    mirror_obs_idx += append_list( len(mirror_obs_idx) , 9 )
+
+    body_list = [ "head", "torso", "toes_l", "toes_r", "talus_l", "talus_r", "calcn_l", "calcn_r", \
         "tibia_l", "tibia_r", "femur_l", "femur_r", "pros_foot_l", "pros_foot_r", "pros_tibia_l", "pros_tibia_r"]
 
     for body_part in body_list:
