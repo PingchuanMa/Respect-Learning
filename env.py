@@ -12,6 +12,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
     def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para=-0.4, mirror=False, reward_version=0, difficulty = 0 ):
         
         self.mirror = mirror
+        self.difficulty = difficulty
         super().__init__(visualize, integrator_accuracy, difficulty)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) 
@@ -38,9 +39,12 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def get_observation_space_size(self):
         if self.prosthetic == True:
+            shift = 0
+            if self.difficulty > 1:
+                shift = 2
             if self.mirror:
-                return 404
-            return 323
+                return 404 + shift
+            return 323 + shift
         return 167
 
     def reward(self):
@@ -51,11 +55,11 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
         if self.difficulty == 0:
             rew_ori = self.reward_origin_round1( state_desc )
-        else
+        else:
             rew_ori = self.reward_origin_round2( state_desc )
 
         rew_speed = param.w_speed * rew_ori
-        rew_all = self.reward_func(state_desc)
+        rew_all = self.reward_func(state_desc, self.difficulty)
         rew_all['speed'] = rew_speed
         rew_total = sum(rew_all.values())
         rew_total = param.rew_scale * (rew_total + param.rew_const)

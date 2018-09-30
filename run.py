@@ -21,10 +21,10 @@ from util import state_desc_to_ob_idx
 import param
 
 
-def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, symcoeff, mirror, reward_version,
+def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, symcoeff, mirror, reward_version, difficulty,
     cont=False, iter=None, play=False):
 
-    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, mirror=mirror, reward_version=reward_version)
+    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, mirror=mirror, reward_version=reward_version, difficulty=difficulty)
 
     if cont:
         assert iter is not None
@@ -63,9 +63,9 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
     return pi
 
 
-def test(identifier, policy_fn, seed, iter, mirror, reward_version):
+def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty):
     
-    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror, save_final=False, play=True)
+    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror, play=True, reward_version=reward_version , difficulty=difficulty)
     load_state(identifier, iter)
     env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version)
 
@@ -116,6 +116,8 @@ def main():
     parser.add_argument('--layer_norm', default=True, action='store_true')
     parser.add_argument('--activation', type=str, default='selu')
     parser.add_argument('--reward', type=int, default=0)
+    parser.add_argument('--difficulty', type=int, default=0)
+    
     args = parser.parse_args()
 
     def policy_fn(name, ob_space, ac_space):
@@ -134,9 +136,9 @@ def main():
     #train/test
     if not args.play:
         train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter,
-            seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym, mirror=args.mirror, reward_version=args.reward)
+            seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym, mirror=args.mirror, reward_version=args.reward, difficulty= args.difficulty)
     else:
-        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror, reward_version=args.reward)
+        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror, reward_version=args.reward, difficulty = args.difficulty)
 
 
 
