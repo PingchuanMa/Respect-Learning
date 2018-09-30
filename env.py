@@ -9,10 +9,10 @@ from reward import Reward
 
 class ProstheticsEnv(env.ProstheticsEnv):
 
-    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para=-0.4, mirror=False, reward_version=0 ):
+    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para=-0.4, mirror=False, reward_version=0, difficulty = 0 ):
         
         self.mirror = mirror
-        super().__init__(visualize, integrator_accuracy)
+        super().__init__(visualize, integrator_accuracy, difficulty)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) 
 
@@ -20,7 +20,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
             self.reset()
             # additional information are already added into the state descriptions in self.reset() where
             # self.get_observation are called 
-            self.mirror_id = get_mirror_id(self.get_state_desc())
+            self.mirror_id = get_mirror_id(self.get_state_desc(), difficulty = self.difficulty)
 
             self.action_space = ( [0.0] * (self.osim_model.get_action_space_size() + 3), [1.0] * (self.osim_model.get_action_space_size() + 3) )
             self.action_space = spaces.Box(np.array(self.action_space[0]), np.array(self.action_space[1]) )
@@ -34,7 +34,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def get_observation(self):
         state_desc = self.get_state_desc()
-        return state_desc_to_ob(state_desc, self.mirror)
+        return state_desc_to_ob(state_desc, self.difficulty, self.mirror)
 
     def get_observation_space_size(self):
         if self.prosthetic == True:
@@ -48,7 +48,12 @@ class ProstheticsEnv(env.ProstheticsEnv):
         prev_state_desc = self.get_prev_state_desc()
         if not prev_state_desc:
             return 0
-        rew_ori = 9.0 - (state_desc["body_vel"]["pelvis"][0] - 3.0) ** 2
+
+        if self.difficulty == 0:
+            rew_ori = self.reward_origin_round1( state_desc )
+        else
+            rew_ori = self.reward_origin_round2( state_desc )
+
         rew_speed = param.w_speed * rew_ori
         rew_all = self.reward_func(state_desc)
         rew_all['speed'] = rew_speed
@@ -56,6 +61,27 @@ class ProstheticsEnv(env.ProstheticsEnv):
         rew_total = param.rew_scale * (rew_total + param.rew_const)
         rew_all['original'] = rew_ori
         return rew_total, rew_all
+
+    def reward_origin_round1(self, state_desc):
+        return 9.0 - (state_desc["body_vel"]["pelvis"][0] - 3.0) ** 2
+
+    def reward_origin_round2(self, state_desc):
+
+        penalty = 0
+
+        # Small penalty for too much activation (cost of transport)
+        penalty += np.sum(np.array(self.osim_model.get_activations())**2) * 0.001
+
+        # Big penalty for not matching the vector on the X,Z projection.
+        # No penalty for the vertical axis
+        penalty += (state_desc["body_vel"]["pelvis"][0] - state_desc["target_vel"][0])**2
+        penalty += (state_desc["body_vel"]["pelvis"][2] - state_desc["target_vel"][2])**2
+        
+        # Reward for not falling
+        reward = 10.0
+        
+        return reward - penalty 
+        
 
     def step(self, action, project = True):
         self.prev_state_desc = self.get_state_desc()        
