@@ -120,9 +120,10 @@ def main():
     
     args = parser.parse_args()
 
-    def policy_fn(name, ob_space, ac_space):
-        return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
-            hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
+    def policy_fn(name, ob_space, ac_space, end_points):
+        return mlp_policy.MpcPolicy(name=name, ob_space=ob_space, ac_space=ac_space, end_points=end_points,
+                                    hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm,
+                                    activation=getattr(tf.nn, args.activation))
 
     #tf configs
     ncpu = multiprocessing.cpu_count()

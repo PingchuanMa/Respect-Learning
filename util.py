@@ -35,25 +35,29 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False,):
     else:
         body_list = ["pelvis", "head", "torso", "toes_l", "talus_l", "calcn_l", "tibia_l", "femur_l", "femur_r", "pros_foot_r", "pros_tibia_r"]
 
+    target_vel = [0, 0, 0]
+
     if difficulty > 0:
         # target vel (veltical is meaningless)
-        res += state_desc["target_vel"][0::2]
+        # res += state_desc["target_vel"][0::2]
+        target_vel = state_desc["target_vel"]
 
     for body_part in body_list:
         cur = []
-        for info_type in ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"]:
+        for info_type in ["body_pos", "body_pos_rot", "body_vel", "body_vel_rot", "body_acc", "body_acc_rot"]:
             cur += state_desc[info_type][body_part]
         if body_part == "pelvis":
-            pelvis = cur
-            res += cur[3:]
+            pelvis = copy.deepcopy(cur)
+            for i in range(3):
+                cur[i + 6] -= target_vel[i]
+            res += cur
         else:
-            cur_upd = cur
-            cur_upd[:3] = [cur[i] - pelvis[i] for i in range(3)]
-            cur_upd[6:9] = [cur[i] - pelvis[i] for i in range(6, 9)]
-            res += cur_upd  # manual bug fix for official repo
+            for i in range(6):
+                cur[i] -= pelvis[i]
+            res += cur  # manual bug fix for official repo
 
     for joint in ["ankle_l", "ankle_r", "back", "hip_l", "hip_r", "knee_l", "knee_r", "ground_pelvis"]:
-        for info_type in ["joint_pos", "joint_vel"]:
+        for info_type in ["joint_pos", "joint_vel", "joint_acc"]:
             res += state_desc[info_type][joint]
 
     for muscle in sorted(state_desc["muscles"].keys()):
@@ -64,8 +68,106 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False,):
         res += state_desc["forces"][force]
 
     cm_pos = [state_desc["misc"]["mass_center_pos"][i] - pelvis[i] for i in range(3)]
-    res += cm_pos + state_desc["misc"]["mass_center_vel"]
+    cm_vel = [state_desc["misc"]["mass_center_vel"][i] - target_vel[i] for i in range(3)]
+    res += cm_pos + cm_vel + state_desc["misc"]["mass_center_acc"]
     return np.array(res)
+
+
+def cascade_helper(state_desc, difficulty, mirror=False):
+    # Augmented environment from the L2R challenge
+    res = []
+    end_points = dict()
+    pelvis = None
+
+    if mirror:
+        for body_part in ["toes_l", "talus_l", "calcn_l", "tibia_l", "pros_foot_r", "pros_tibia_r"]:
+            mirror_name = (body_part[:-1] + "r") if body_part[-1] == 'l' else (body_part[:-1] + "l")
+            for info_type in ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"]:
+                state_desc[info_type][mirror_name] = [0] * len(state_desc[info_type][body_part])
+
+        for muscle in ['gastroc_l', 'soleus_l', 'tib_ant_l']:
+            mirror_name = muscle[:-1] + "r"
+            state_desc['muscles'][mirror_name] = copy.deepcopy(state_desc["muscles"][muscle])
+            for item in state_desc['muscles'][mirror_name]:
+                state_desc['muscles'][mirror_name][item] = 0
+
+        if "pros_foot_r_0" in state_desc["forces"]:
+            state_desc["forces"]["foot_r"] = copy.deepcopy(state_desc["forces"]['pros_foot_r_0'])
+            del state_desc["forces"]['pros_foot_r_0']
+
+            state_desc["forces"]["foot_l"][12:18] = list(map(lambda x: x[0] - x[1],
+                                                             zip(state_desc["forces"]["foot_l"][12:18],
+                                                                 state_desc["forces"]["foot_l"][18:])))
+            state_desc["forces"]["foot_l"] = state_desc["forces"]["foot_l"][:18]
+
+        for force in ['gastroc_l', 'soleus_l', 'tib_ant_l']:
+            mirror_name = force[:-1] + "r"
+            state_desc['forces'][mirror_name] = [0]
+
+    if mirror:
+        body_list = ["pelvis", "head", "torso", "toes_l", "toes_r", "talus_l", "talus_r", "calcn_l", "calcn_r", \
+                     "tibia_l", "tibia_r", "femur_l", "femur_r", "pros_foot_l", "pros_foot_r", "pros_tibia_l",
+                     "pros_tibia_r"]
+    else:
+        body_list = ["pelvis", "head", "torso", "toes_l", "talus_l", "calcn_l", "tibia_l", "femur_l", "femur_r",
+                     "pros_foot_r", "pros_tibia_r"]
+
+    target_vel = [0, 0, 0]
+
+    if difficulty > 0:
+        # target vel (veltical is meaningless)
+        # res += state_desc["target_vel"][0::2]
+        target_vel = state_desc["target_vel"]
+
+    start = len(res)
+
+    for body_part in body_list:
+        cur = []
+        for info_type in ["body_pos", "body_pos_rot", "body_vel", "body_vel_rot", "body_acc", "body_acc_rot"]:
+            cur += state_desc[info_type][body_part]
+        if body_part == "pelvis":
+            pelvis = copy.deepcopy(cur)
+            for i in range(3):
+                cur[i + 6] -= target_vel[i]
+            res += cur
+        else:
+            for i in range(6):
+                cur[i] -= pelvis[i]
+            res += cur  # manual bug fix for official repo
+
+    end = len(res)
+    end_points['body'] = (start, end)
+    start = end
+
+    for joint in ["ankle_l", "ankle_r", "back", "hip_l", "hip_r", "knee_l", "knee_r", "ground_pelvis"]:
+        for info_type in ["joint_pos", "joint_vel", "joint_acc"]:
+            res += state_desc[info_type][joint]
+            end = len(res)
+            end_points[info_type] = (start, end)
+            start = end
+
+    for muscle in sorted(state_desc["muscles"].keys()):
+        for info_type in ["activation", "fiber_force", "fiber_length", "fiber_velocity"]:
+            res += [state_desc["muscles"][muscle][info_type]]
+
+    end = len(res)
+    end_points['muscle'] = (start, end)
+    start = end
+
+    for force in sorted(state_desc["forces"].keys()):
+        res += state_desc["forces"][force]
+
+    end = len(res)
+    end_points['force'] = (start, end)
+    start = end
+
+    cm_pos = [state_desc["misc"]["mass_center_pos"][i] - pelvis[i] for i in range(3)]
+    cm_vel = [state_desc["misc"]["mass_center_vel"][i] - target_vel[i] for i in range(3)]
+    res += cm_pos + cm_vel + state_desc["misc"]["mass_center_acc"]
+
+    end = len(res)
+    end_points['misc'] = (start, end)
+    return end_points
 
 def state_desc_to_ob_idx(state_desc, difficulty):
     # Augmented environment from the L2R challenge
@@ -188,6 +290,8 @@ def state_desc_to_ob_idx(state_desc, difficulty):
 17   soleus_l
 18   tib_ant_l
 """
+
+
 def get_mirror_id( state_desc, difficulty ):
     # 0  ~ 7  right
     # 8  ~ 15 left

@@ -148,10 +148,11 @@ def learn(env, policy_fn, *,
     # ----------------------------------------
     ob_space = env.observation_space
     ac_space = env.action_space
+    end_points = env.get_cascade_arch()
     mirror = hasattr(env, 'mirror_id')
     mirror_id = env.mirror_id if mirror else None
-    pi = policy_fn("pi", ob_space, ac_space) # Construct network for new policy
-    oldpi = policy_fn("oldpi", ob_space, ac_space) # Network for old policy
+    pi = policy_fn("pi", ob_space, ac_space, end_points) # Construct network for new policy
+    oldpi = policy_fn("oldpi", ob_space, ac_space, end_points) # Network for old policy
     atarg = tf.placeholder(dtype=tf.float32, shape=[None]) # Target advantage function (if applicable)
     ret = tf.placeholder(dtype=tf.float32, shape=[None]) # Empirical return
 

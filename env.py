@@ -3,6 +3,7 @@ import numpy as np
 from osim import env
 import param
 from util import state_desc_to_ob
+from util import cascade_helper
 from util import get_mirror_id
 from gym import spaces
 from reward import Reward
@@ -37,15 +38,21 @@ class ProstheticsEnv(env.ProstheticsEnv):
         state_desc = self.get_state_desc()
         return state_desc_to_ob(state_desc, self.difficulty, self.mirror)
 
+    def get_cascade_arch(self):
+        state_desc = self.get_state_desc()
+        return cascade_helper(state_desc, self.difficulty, self.mirror)
+
     def get_observation_space_size(self):
-        if self.prosthetic == True:
-            shift = 0
-            if self.difficulty > 1:
-                shift = 2
-            if self.mirror:
-                return 404 + shift
-            return 323 + shift
-        return 167
+        # if self.prosthetic == True:
+        #     shift = 0
+        #     if self.difficulty > 1:
+        #         shift = 0
+        #     if self.mirror:
+        #         return 404 + shift
+        #     return 323 + shift
+        # return 167
+        state_desc = self.get_state_desc()
+        return len(state_desc_to_ob(state_desc, self.difficulty, self.mirror))
 
     def reward(self):
         state_desc = self.get_state_desc()
