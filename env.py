@@ -16,7 +16,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
         super().__init__(visualize, integrator_accuracy, difficulty)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) 
-
+        print( self.get_observation_space_size() )
         if mirror:
             self.reset()
             # additional information are already added into the state descriptions in self.reset() where
@@ -40,7 +40,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
     def get_observation_space_size(self):
         if self.prosthetic == True:
             shift = 0
-            if self.difficulty > 1:
+            if self.difficulty > 0:
                 shift = 2
             if self.mirror:
                 return 404 + shift

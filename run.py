@@ -67,8 +67,9 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty):
     
     pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror, play=True, reward_version=reward_version , difficulty=difficulty)
     load_state(identifier, iter)
-    env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version)
-
+    print(difficulty)
+    env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version, difficulty=difficulty)
+    print(env.difficulty)
     # pi = train(identifier, policy_fn, 1, 1, seed, play=True)
 
     observation = env.reset()

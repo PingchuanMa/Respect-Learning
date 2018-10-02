@@ -23,7 +23,7 @@ with open('./token.txt', 'r') as f:
     crowdai_token = f.readline()
 
 
-def submit(identifier, policy_fn, seed, iter, mirror):
+def submit(identifier, policy_fn, seed, iter, mirror, difficulty):
 
     client = Client(remote_base)
 
@@ -31,11 +31,11 @@ def submit(identifier, policy_fn, seed, iter, mirror):
     observation = client.env_create(crowdai_token, env_id="ProstheticsEnv")
 
     # IMPLEMENTATION OF YOUR CONTROLLER
-    pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, play=True, bend=0, ent=0, symcoeff=0, reward_version=0)
+    pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, play=True, bend=0, ent=0, symcoeff=0, reward_version=0, difficulty=difficulty)
     load_state(identifier, iter)
 
     while True:
-        ob = state_desc_to_ob(observation, mirror=mirror)
+        ob = state_desc_to_ob(observation, difficulty ,mirror=mirror)
         action = pi.act(False, np.array(ob))[0].tolist()
         if mirror:
             action = action[:-3]
@@ -62,7 +62,8 @@ def main():
     parser.add_argument('--layer_norm', default=True, action='store_true')
     parser.add_argument('--activation', type=str, default='selu')
     parser.add_argument('--noise', type=float, default=0.2)
-    
+    parser.add_argument('--difficulty', type=int, default=0)
+
     args = parser.parse_args()
 
     # def policy_fn(name, ob_space, ac_space):
@@ -82,7 +83,7 @@ def main():
     config.gpu_options.allow_growth = True
     tf.Session(config=config).__enter__()
 
-    submit(args.id, policy_fn, args.seed, args.iter, args.mirror)
+    submit(args.id, policy_fn, args.seed, args.iter, args.mirror, args.difficulty)
 
 
 if __name__ == '__main__':
