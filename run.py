@@ -17,13 +17,14 @@ from tools import pposgd_simple
 from tools import mlp_policy
 from tools.utils import *
 from tools.plot_rewards import plot_rewards
+from util import state_desc_to_ob_idx
 import param
 
 
-def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, reward_version,
+def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, symcoeff, mirror, reward_version, difficulty,
     cont=False, iter=None, play=False):
 
-    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, reward_version=reward_version)
+    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, mirror=mirror, reward_version=reward_version, difficulty=difficulty)
 
     if cont:
         assert iter is not None
@@ -40,7 +41,8 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, rewa
     pi = pposgd_simple.learn(env, policy_fn,
                              max_timesteps=num_timesteps,
                              timesteps_per_actorbatch=timesteps_per_actorbatch,
-                             clip_param=0.2, entcoeff=0.0,
+                             clip_param=0.2, entcoeff=ent,
+                             symcoeff= symcoeff,
                              optim_epochs=10,
                              optim_stepsize=3e-4,
                              optim_batchsize=64,
@@ -61,11 +63,13 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, rewa
     return pi
 
 
-def test(identifier, policy_fn, seed, iter, reward_version):
+def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty):
     
-    pi = train(identifier, policy_fn, 1, 1, seed, play=True)
+    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror, play=True, reward_version=reward_version , difficulty=difficulty)
     load_state(identifier, iter)
-    env = TestProstheticsEnv(visualize=True, reward_version=reward_version)
+    env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version)
+
+    # pi = train(identifier, policy_fn, 1, 1, seed, play=True)
 
     observation = env.reset()
     reward = 0
@@ -100,22 +104,28 @@ def main():
     parser = argparse.ArgumentParser(description='Train.')
     parser.add_argument('--id', type=str, default='origin')
     parser.add_argument('--step', type=int, default=1e9)
-    parser.add_argument('--bend', type=float, default=-0.9599310849999999)
+    parser.add_argument('--bend', type=float, default=-0.4)
+    parser.add_argument('--ent', type=float, default=0.001)
+    parser.add_argument('--sym', type=float, default=0.001)
     parser.add_argument('--step_per_iter', type=int, default=16384)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--cont', default=False, action='store_true')
     parser.add_argument('--play', default=False, action='store_true')
     parser.add_argument('--iter', type=str, default='final')
     parser.add_argument('--net', type=int, nargs='+', default=(256, 128, 64))
+    parser.add_argument('--mirror', default=False, action='store_true')
     parser.add_argument('--noise', type=float, default=0.2)
     parser.add_argument('--layer_norm', default=True, action='store_true')
     parser.add_argument('--activation', type=str, default='selu')
     parser.add_argument('--reward', type=int, default=0)
+    parser.add_argument('--difficulty', type=int, default=0)
+    
     args = parser.parse_args()
 
-    def policy_fn(name, ob_space, ac_space):
-        return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
-            hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
+    def policy_fn(name, ob_space, ac_space, end_points):
+        return mlp_policy.MpcPolicy(name=name, ob_space=ob_space, ac_space=ac_space, end_points=end_points,
+                                    hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm,
+                                    activation=getattr(tf.nn, args.activation))
 
     #tf configs
     ncpu = multiprocessing.cpu_count()
@@ -128,10 +138,11 @@ def main():
 
     #train/test
     if not args.play:
-        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter, 
-            seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, reward_version=args.reward)
+        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter,
+            seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym, mirror=args.mirror, reward_version=args.reward, difficulty= args.difficulty)
     else:
-        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, reward_version=args.reward)
+        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror, reward_version=args.reward, difficulty = args.difficulty)
+
 
 
 if __name__ == '__main__':
