@@ -43,16 +43,16 @@ class ProstheticsEnv(env.ProstheticsEnv):
         return cascade_helper(state_desc, self.difficulty, self.mirror)
 
     def get_observation_space_size(self):
-        # if self.prosthetic == True:
-        #     shift = 0
-        #     if self.difficulty > 1:
-        #         shift = 0
-        #     if self.mirror:
-        #         return 404 + shift
-        #     return 323 + shift
-        # return 167
-        state_desc = self.get_state_desc()
-        return len(state_desc_to_ob(state_desc, self.difficulty, self.mirror))
+        if self.prosthetic == True:
+            shift = 0
+            if self.difficulty > 1:
+                shift = 0
+            if self.mirror:
+                return 404 + shift
+            return 409 + shift
+        return 167
+        # state_desc = self.get_state_desc()
+        # return len(state_desc_to_ob(state_desc, self.difficulty, self.mirror))
 
     def reward(self):
         state_desc = self.get_state_desc()
