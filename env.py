@@ -49,7 +49,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
                 shift = 0
             if self.mirror:
                 return 404 + shift
-            return 409 + shift
+            return 412 + shift
         return 167
         # state_desc = self.get_state_desc()
         # return len(state_desc_to_ob(state_desc, self.difficulty, self.mirror))
