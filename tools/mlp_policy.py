@@ -59,7 +59,8 @@ class MlpPolicy(mlp_policy.MlpPolicy):
 
 class MpcPolicy(mlp_policy.MlpPolicy):
 
-    def _init(self, ob_space, ac_space, end_points, gaussian_fixed_var=True, noise_std=0.0, layer_norm=False, activation=tf.nn.relu):
+    def _init(self, ob_space, ac_space, end_points, gaussian_fixed_var=True,
+              noise_std=0.0, layer_norm=False, activation=tf.nn.relu, **kwargs):
         assert isinstance(ob_space, gym.spaces.Box)
 
         self.pdtype = pdtype = make_pdtype(ac_space)
