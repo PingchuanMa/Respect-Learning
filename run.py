@@ -42,7 +42,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
                              max_timesteps=num_timesteps,
                              timesteps_per_actorbatch=timesteps_per_actorbatch,
                              clip_param=0.2, entcoeff=ent,
-                             symcoeff= symcoeff,
+                             symcoeff=symcoeff,
                              optim_epochs=10,
                              optim_stepsize=3e-4,
                              optim_batchsize=64,
@@ -115,7 +115,7 @@ def main():
     parser.add_argument('--net', type=int, nargs='+', default=(256, 128, 64))
     parser.add_argument('--mirror', default=False, action='store_true')
     parser.add_argument('--noise', type=float, default=0.2)
-    parser.add_argument('--layer_norm', default=True, action='store_true')
+    parser.add_argument('--layer_norm', default=False, action='store_true')
     parser.add_argument('--activation', type=str, default='selu')
     parser.add_argument('--reward', type=int, default=0)
     parser.add_argument('--difficulty', type=int, default=0)

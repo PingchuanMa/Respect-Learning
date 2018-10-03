@@ -1,0 +1,1 @@
+OMP_NUM_THREADS=1 mpirun -np 16 python3 ../run.py --step_per_iter=512 --id=cascade --layer_norm --difficulty=1
