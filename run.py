@@ -112,6 +112,7 @@ def main():
     parser.add_argument('--cont', default=False, action='store_true')
     parser.add_argument('--play', default=False, action='store_true')
     parser.add_argument('--iter', type=str, default='final')
+    parser.add_argument('--net', type=int, nargs='+', default=(256, 128, 64))
     parser.add_argument('--mirror', default=False, action='store_true')
     parser.add_argument('--noise', type=float, default=0.2)
     parser.add_argument('--layer_norm', default=False, action='store_true')
@@ -122,8 +123,8 @@ def main():
     args = parser.parse_args()
 
     def policy_fn(name, ob_space, ac_space, end_points):
-        return mlp_policy.MpcPolicy(name=name, ob_space=ob_space, ac_space=ac_space, end_points=end_points,
-                                    noise_std=args.noise, layer_norm=args.layer_norm,
+        return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space, end_points=end_points,
+                                    hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm,
                                     activation=getattr(tf.nn, args.activation))
 
     #tf configs
