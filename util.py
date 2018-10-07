@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 
-def state_desc_to_ob(state_desc, mirror=False):
+def state_desc_to_ob(state_desc, difficulty, mirror=False,):
     # Augmented environment from the L2R challenge
     res = []
     pelvis = None
@@ -35,6 +35,10 @@ def state_desc_to_ob(state_desc, mirror=False):
     else:
         body_list = ["pelvis", "head", "torso", "toes_l", "talus_l", "calcn_l", "tibia_l", "femur_l", "femur_r", "pros_foot_r", "pros_tibia_r"]
 
+    if difficulty > 0:
+        # target vel (veltical is meaningless)
+        res += state_desc["target_vel"][0::2]
+
     for body_part in body_list:
         cur = []
         for info_type in ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"]:
@@ -63,7 +67,7 @@ def state_desc_to_ob(state_desc, mirror=False):
     res += cm_pos + state_desc["misc"]["mass_center_vel"]
     return np.array(res)
 
-def state_desc_to_ob_idx(state_desc):
+def state_desc_to_ob_idx(state_desc, difficulty):
     # Augmented environment from the L2R challenge
 
     idx_dict = {}
@@ -71,6 +75,11 @@ def state_desc_to_ob_idx(state_desc):
     mirror_obs_idx = []
 
     append_list = lambda x ,y: list(range( x, x + y ))
+
+    if difficulty > 0:
+        # target vel (veltical is meaningless)
+        shift_factor += [ 1, 1 ]
+        mirror_obs_idx += append_list( len(mirror_obs_idx) , 2 )
 
     idx_dict["body_part"] = {}
 
@@ -179,12 +188,12 @@ def state_desc_to_ob_idx(state_desc):
 17   soleus_l
 18   tib_ant_l
 """
-def get_mirror_id( state_desc ):
+def get_mirror_id( state_desc, difficulty ):
     # 0  ~ 7  right
     # 8  ~ 15 left
     # 16 ~ 18 left only
     act_idx = [ 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 19, 20, 21, 16, 17, 18 ]
-    ob_idx, shift_factor = state_desc_to_ob_idx( state_desc )
+    ob_idx, shift_factor = state_desc_to_ob_idx( state_desc, difficulty )
     print(len(act_idx))
     print(len(ob_idx))
     print(len(shift_factor))
