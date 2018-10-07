@@ -18,7 +18,7 @@ from util import state_desc_to_ob
 import param
 
 # Settings
-remote_base = "http://grader.crowdai.org:1729"
+remote_base = "http://grader.crowdai.org:1730"
 with open('./token.txt', 'r') as f:
     crowdai_token = f.readline()
 
@@ -31,11 +31,11 @@ def submit(identifier, policy_fn, seed, iter, mirror):
     observation = client.env_create(crowdai_token, env_id="ProstheticsEnv")
 
     # IMPLEMENTATION OF YOUR CONTROLLER
-    pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, play=True, bend=0, ent=0, symcoeff=0, reward_version=0)
+    pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, play=True, bend=0, ent=0, symcoeff=0, reward_version=0, difficulty=1)
     load_state(identifier, iter)
 
     while True:
-        ob = state_desc_to_ob(observation, mirror=mirror)
+        ob = state_desc_to_ob(observation, difficulty=1, mirror=mirror)
         action = pi.act(False, np.array(ob))[0].tolist()
         if mirror:
             action = action[:-3]
@@ -69,7 +69,7 @@ def main():
     #     return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
     #         hid_layer_sizes=args.net)
 
-    def policy_fn(name, ob_space, ac_space):
+    def policy_fn(name, ob_space, ac_space, **kwargs):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
             hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
 
