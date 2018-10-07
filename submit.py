@@ -39,10 +39,10 @@ def submit(identifier, policy_fn, seed, iter, mirror):
         action = pi.act(False, np.array(ob))[0].tolist()
         if mirror:
             action = action[:-3]
-        # for _ in range(param.action_repeat):
-        [observation, reward, done, info] = client.env_step(action, True)
-            # if done:
-                # break
+        for _ in range(param.action_repeat):
+            [observation, reward, done, info] = client.env_step(action, True)
+            if done:
+                break
         if done:
             observation = client.env_reset()
             if not observation:
