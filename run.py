@@ -143,6 +143,7 @@ def main():
                             intra_op_parallelism_threads=ncpu,
                             inter_op_parallelism_threads=ncpu)
     config.gpu_options.allow_growth = True
+    print("We have {} cpus!".format(ncpu))
     tf.Session(config=config).__enter__()
 
     #train/test
