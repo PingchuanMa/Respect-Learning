@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 
-def state_desc_to_ob(state_desc, difficulty, mirror=False,):
+def state_desc_to_ob(state_desc, difficulty, mirror=False, no_acc=False):
     # Augmented environment from the L2R challenge
     res = []
     pelvis = None
@@ -30,10 +30,15 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False,):
             state_desc['forces'][mirror_name] = [0]
 
     if mirror:
-        body_list = ["pelvis", "head", "torso", "toes_l", "toes_r", "talus_l", "talus_r", "calcn_l", "calcn_r", \
-            "tibia_l", "tibia_r", "femur_l", "femur_r", "pros_foot_l", "pros_foot_r", "pros_tibia_l", "pros_tibia_r"]
+        body_list = ["pelvis", "head", "torso", "toes_l", "toes_r",
+                     "talus_l", "talus_r", "calcn_l", "calcn_r",
+                     "tibia_l", "tibia_r", "femur_l", "femur_r",
+                     "pros_foot_l", "pros_foot_r", "pros_tibia_l",
+                     "pros_tibia_r"]
     else:
-        body_list = ["pelvis", "head", "torso", "toes_l", "talus_l", "calcn_l", "tibia_l", "femur_l", "femur_r", "pros_foot_r", "pros_tibia_r"]
+        body_list = ["pelvis", "head", "torso", "toes_l", "talus_l",
+                     "calcn_l", "tibia_l", "femur_l", "femur_r",
+                     "pros_foot_r", "pros_tibia_r"]
 
     target_vel = [0, 0, 0]
 
@@ -42,9 +47,13 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False,):
         # res += state_desc["target_vel"][0::2]
         target_vel = state_desc["target_vel"]
 
+    if no_acc:
+        info_types = ["body_pos", "body_pos_rot", "body_vel", "body_vel_rot"]
+    else:
+        info_types = ["body_pos", "body_pos_rot", "body_vel", "body_vel_rot", "body_acc", "body_acc_rot"]
     for body_part in body_list:
         cur = []
-        for info_type in ["body_pos", "body_pos_rot", "body_vel", "body_vel_rot", "body_acc", "body_acc_rot"]:
+        for info_type in info_types:
             cur += state_desc[info_type][body_part]
         if body_part == "pelvis":
             pelvis = copy.deepcopy(cur)
@@ -56,8 +65,12 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False,):
                 cur[i] -= pelvis[i]
             res += cur  # manual bug fix for official repo
 
+    if no_acc:
+        info_types = ["joint_pos", "joint_vel"]
+    else:
+        info_types = ["joint_pos", "joint_vel", "joint_acc"]
     for joint in ["ankle_l", "ankle_r", "back", "hip_l", "hip_r", "knee_l", "knee_r", "ground_pelvis"]:
-        for info_type in ["joint_pos", "joint_vel", "joint_acc"]:
+        for info_type in info_types:
             res += state_desc[info_type][joint]
 
     for muscle in sorted(state_desc["muscles"].keys()):
@@ -69,7 +82,10 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False,):
 
     cm_pos = [state_desc["misc"]["mass_center_pos"][i] - pelvis[i] for i in range(3)]
     cm_vel = [state_desc["misc"]["mass_center_vel"][i] - target_vel[i] for i in range(3)]
-    res += cm_pos + cm_vel + state_desc["misc"]["mass_center_acc"]
+    if no_acc:
+        res += cm_pos + cm_vel
+    else:
+        res += cm_pos + cm_vel + state_desc["misc"]["mass_center_acc"]
     return np.array(res)
 
 

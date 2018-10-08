@@ -10,12 +10,13 @@ from reward import Reward
 
 class ProstheticsEnv(env.ProstheticsEnv):
 
-    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para=-0.4,
-                 mirror=False, reward_version=0, difficulty = 0, fix_target=False):
+    def __init__(self, visualize=True, integrator_accuracy=5e-5, bend_para=-0.4,
+                 mirror=False, reward_version=0, difficulty=0, fix_target=False, no_acc=False):
         
         self.mirror = mirror
         self.difficulty = difficulty
         self.fix_target = fix_target
+        self.no_acc = no_acc
         super().__init__(visualize, integrator_accuracy, difficulty)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) 
@@ -38,7 +39,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def get_observation(self):
         state_desc = self.get_state_desc()
-        return state_desc_to_ob(state_desc, self.difficulty, self.mirror)
+        return state_desc_to_ob(state_desc, self.difficulty, self.mirror, self.no_acc)
 
     def get_cascade_arch(self):
         state_desc = self.get_state_desc()
@@ -46,12 +47,11 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def get_observation_space_size(self):
         if self.prosthetic == True:
-            shift = 0
-            if self.difficulty > 1:
-                shift = 0
             if self.mirror:
-                return 404 + shift
-            return 412 + shift
+                return 404
+            if self.no_acc:
+                return 326
+            return 412
         return 167
         # state_desc = self.get_state_desc()
         # return len(state_desc_to_ob(state_desc, self.difficulty, self.mirror))
