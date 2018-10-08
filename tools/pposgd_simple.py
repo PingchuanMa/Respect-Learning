@@ -149,19 +149,10 @@ def learn(env, policy_fn, *,
     writer = get_tb_writer(identifier)
     ob_space = env.observation_space
     ac_space = env.action_space
-    end_points = {
-        'body': (0, 198),
-        'joint_pos': (198, 215),
-        'joint_vel': (215, 232),
-        'joint_acc': (232, 249),
-        'muscle': (249, 325),
-        'force': (325, 403),
-        'misc': (403, 412)
-    }
     mirror = hasattr(env, 'mirror_id')
     mirror_id = env.mirror_id if mirror else None
-    pi = policy_fn("pi", ob_space, ac_space, end_points) # Construct network for new policy
-    oldpi = policy_fn("oldpi", ob_space, ac_space, end_points) # Network for old policy
+    pi = policy_fn("pi", ob_space, ac_space) # Construct network for new policy
+    oldpi = policy_fn("oldpi", ob_space, ac_space) # Network for old policy
     atarg = tf.placeholder(dtype=tf.float32, shape=[None]) # Target advantage function (if applicable)
     ret = tf.placeholder(dtype=tf.float32, shape=[None]) # Empirical return
 

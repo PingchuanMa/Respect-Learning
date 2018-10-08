@@ -71,7 +71,8 @@ def main():
 
     def policy_fn(name, ob_space, ac_space, **kwargs):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
-            hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
+                                    hid_layer_sizes=args.net, noise_std=args.noise,
+                                    layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
 
     #tf configs
     ncpu = multiprocessing.cpu_count()

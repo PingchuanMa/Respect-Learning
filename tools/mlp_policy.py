@@ -59,8 +59,18 @@ class MlpPolicy(mlp_policy.MlpPolicy):
 
 class MpcPolicy(mlp_policy.MlpPolicy):
 
-    def _init(self, ob_space, ac_space, end_points, gaussian_fixed_var=True,
-              noise_std=0.0, layer_norm=False, activation=tf.nn.relu, **kwargs):
+    end_points = {
+        'body': (0, 198),
+        'joint_pos': (198, 215),
+        'joint_vel': (215, 232),
+        'joint_acc': (232, 249),
+        'muscle': (249, 325),
+        'force': (325, 403),
+        'misc': (403, 412)
+    }
+
+    def _init(self, ob_space, ac_space, gaussian_fixed_var=True, noise_std=0.0,
+              layer_norm=False, activation=tf.nn.relu, **kwargs):
         assert isinstance(ob_space, gym.spaces.Box)
 
         self.pdtype = pdtype = make_pdtype(ac_space)
@@ -71,58 +81,58 @@ class MpcPolicy(mlp_policy.MlpPolicy):
         def mpc_conv(layer, num_filter, kernel_size):
             layer = tf.layers.conv2d(layer, num_filter, kernel_size,
                                      use_bias=not layer_norm,
-                                     kernel_initializer=tc.layers.xavier_initializer())
+                                     kernel_initializer=tf.variance_scaling_initializer(scale=1.0, mode='fan_in'))
             if layer_norm:
-                layer = tc.layers.layer_norm(layer, center=True, scale=True)
+                layer = tc.layers.layer_norm(layer, center=True, scale=False)
             return activation(layer)
 
         def mpc_fc(layer, units=None):
             units = layer.get_shape().as_list()[1] if units is None else units
             layer = tf.layers.dense(layer, units, use_bias=not layer_norm,
-                                    kernel_initializer=tc.layers.xavier_initializer())
+                                    kernel_initializer=tf.variance_scaling_initializer(scale=1.0, mode='fan_in'))
             if layer_norm:
-                layer = tc.layers.layer_norm(layer, center=True, scale=True)
+                layer = tc.layers.layer_norm(layer, center=True, scale=False)
             return activation(layer)
 
         def build_net(layer):
-            len_body = end_points["body"][1] - end_points["body"][0]
-            body_tensor = layer[:, end_points["body"][0]:end_points["body"][1]]
-            joint_pos_tensor = layer[:, end_points["joint_pos"][0]:end_points["joint_pos"][1]]
-            joint_vel_tensor = layer[:, end_points["joint_vel"][0]:end_points["joint_vel"][1]]
-            joint_acc_tensor = layer[:, end_points["joint_acc"][0]:end_points["joint_acc"][1]]
-            muscle_tensor = layer[:, end_points["muscle"][0]:end_points["muscle"][1]]
-            force_tensor = layer[:, end_points["force"][0]:end_points["force"][1]]
-            misc_tensor = layer[:, end_points["misc"][0]:end_points["misc"][1]]
+            len_body = self.end_points["body"][1] - self.end_points["body"][0]
+            body_tensor = layer[:, self.end_points["body"][0]:self.end_points["body"][1]]
+            joint_pos_tensor = layer[:, self.end_points["joint_pos"][0]:self.end_points["joint_pos"][1]]
+            joint_vel_tensor = layer[:, self.end_points["joint_vel"][0]:self.end_points["joint_vel"][1]]
+            joint_acc_tensor = layer[:, self.end_points["joint_acc"][0]:self.end_points["joint_acc"][1]]
+            muscle_tensor = layer[:, self.end_points["muscle"][0]:self.end_points["muscle"][1]]
+            force_tensor = layer[:, self.end_points["force"][0]:self.end_points["force"][1]]
+            misc_tensor = layer[:, self.end_points["misc"][0]:self.end_points["misc"][1]]
 
             body_tensor = tf.reshape(body_tensor, (-1, len_body // (3 * 6), 6, 3))
 
             body_tensor_1 = mpc_conv(body_tensor, 32, (len_body // (3 * 6), 1))
-            body_tensor_1 = mpc_conv(body_tensor_1, 32, (1, 1)) + body_tensor_1
+            # body_tensor_1 = mpc_conv(body_tensor_1, 32, (1, 1)) + body_tensor_1
             body_tensor_1 = mpc_conv(body_tensor_1, 3, (1, 1))
             body_tensor_1 = tf.layers.flatten(body_tensor_1)
 
             body_tensor_2 = mpc_conv(body_tensor, 32, (1, 6))
-            body_tensor_2 = mpc_conv(body_tensor_2, 32, (1, 1)) + body_tensor_2
+            # body_tensor_2 = mpc_conv(body_tensor_2, 32, (1, 1)) + body_tensor_2
             body_tensor_2 = mpc_conv(body_tensor_2, 3, (1, 1))
             body_tensor_2 = tf.layers.flatten(body_tensor_2)
 
             joint_pos_tensor = mpc_fc(joint_pos_tensor)
-            joint_pos_tensor = mpc_fc(joint_pos_tensor) + joint_pos_tensor
+            # joint_pos_tensor = mpc_fc(joint_pos_tensor) + joint_pos_tensor
             joint_vel_tensor = mpc_fc(joint_vel_tensor)
-            joint_vel_tensor = mpc_fc(joint_vel_tensor) + joint_vel_tensor
+            # joint_vel_tensor = mpc_fc(joint_vel_tensor) + joint_vel_tensor
             joint_acc_tensor = mpc_fc(joint_acc_tensor)
-            joint_acc_tensor = mpc_fc(joint_acc_tensor) + joint_acc_tensor
+            # joint_acc_tensor = mpc_fc(joint_acc_tensor) + joint_acc_tensor
 
             muscle_tensor = mpc_fc(muscle_tensor)
-            muscle_tensor = mpc_fc(muscle_tensor) + muscle_tensor
+            # muscle_tensor = mpc_fc(muscle_tensor) + muscle_tensor
             force_tensor = mpc_fc(force_tensor)
-            force_tensor = mpc_fc(force_tensor) + force_tensor
+            # force_tensor = mpc_fc(force_tensor) + force_tensor
             misc_tensor = mpc_fc(misc_tensor)
-            misc_tensor = mpc_fc(misc_tensor) + misc_tensor
+            # misc_tensor = mpc_fc(misc_tensor) + misc_tensor
 
             emsumble = tf.concat([body_tensor_1, body_tensor_2, joint_pos_tensor, joint_vel_tensor, joint_acc_tensor,
                                   muscle_tensor, force_tensor, misc_tensor], axis=1)
-            emsumble = mpc_fc(emsumble, 256)
+            emsumble = mpc_fc(emsumble, 128)
             emsumble = mpc_fc(emsumble) + emsumble
             emsumble = mpc_fc(emsumble) + emsumble
             return emsumble
@@ -133,7 +143,8 @@ class MpcPolicy(mlp_policy.MlpPolicy):
         with tf.variable_scope('vf'):
             obz = tf.clip_by_value((ob - self.ob_rms.mean) / self.ob_rms.std, -5.0, 5.0)
             last_out = build_net(obz)
-            self.vpred = tf.layers.dense(last_out, 1, name='final', kernel_initializer=tc.layers.xavier_initializer())[:, 0]
+            self.vpred = tf.layers.dense(last_out, 1, name='final', 
+                                         kernel_initializer=tf.variance_scaling_initializer(scale=1.0, mode='fan_in'))[:, 0]
 
         with tf.variable_scope('pol'):
             last_out = build_net(obz)

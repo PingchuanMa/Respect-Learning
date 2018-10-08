@@ -21,10 +21,13 @@ from util import state_desc_to_ob_idx
 import param
 
 
-def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent, symcoeff, mirror, reward_version, difficulty,
-    cont=False, iter=None, play=False):
+def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
+          symcoeff, mirror, reward_version, difficulty, cont=False, iter=None,
+          play=False, fix_target=False):
 
-    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy, bend_para=bend, mirror=mirror, reward_version=reward_version, difficulty=difficulty)
+    env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy,
+                         bend_para=bend, mirror=mirror, reward_version=reward_version,
+                         difficulty=difficulty, fix_target=fix_target)
 
     if cont:
         assert iter is not None
@@ -63,15 +66,19 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
     return pi
 
 
-def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty):
+def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, fix_target):
     
-    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror, play=True, reward_version=reward_version , difficulty=difficulty)
+    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror,
+               play=True, reward_version=reward_version , difficulty=difficulty, fix_target=fix_target)
     load_state(identifier, iter)
-    env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version)
+
+    env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version, difficulty=difficulty, fix_target=fix_target)
+    set_global_seeds(seed)
 
     # pi = train(identifier, policy_fn, 1, 1, seed, play=True)
 
     observation = env.reset()
+    print(env.targets)
     reward = 0
     reward_ori = 0
     while True:
@@ -114,17 +121,19 @@ def main():
     parser.add_argument('--iter', type=str, default='final')
     parser.add_argument('--net', type=int, nargs='+', default=(256, 128, 64))
     parser.add_argument('--mirror', default=False, action='store_true')
-    parser.add_argument('--noise', type=float, default=0.2)
+    parser.add_argument('--noise', type=float, default=0.0)
     parser.add_argument('--layer_norm', default=False, action='store_true')
     parser.add_argument('--activation', type=str, default='selu')
     parser.add_argument('--reward', type=int, default=0)
-    parser.add_argument('--difficulty', type=int, default=0)
+    parser.add_argument('--difficulty', type=int, default=1)
+    parser.add_argument('--fix_target', default=False, action='store_true')
     
     args = parser.parse_args()
 
-    def policy_fn(name, ob_space, ac_space, end_points):
-        return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space, end_points=end_points,
-                                    hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm,
+    def policy_fn(name, ob_space, ac_space):
+        return mlp_policy.MpcPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
+                                    hid_layer_sizes=args.net, noise_std=args.noise,
+                                    layer_norm=args.layer_norm,
                                     activation=getattr(tf.nn, args.activation))
 
     #tf configs
@@ -138,10 +147,15 @@ def main():
 
     #train/test
     if not args.play:
-        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter,
-            seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym, mirror=args.mirror, reward_version=args.reward, difficulty= args.difficulty)
+        train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step,
+              steps_per_iter=args.step_per_iter, seed=args.seed, cont=args.cont,
+              iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym,
+              mirror=args.mirror, reward_version=args.reward,
+              difficulty=args.difficulty, fix_target=args.fix_target)
     else:
-        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror, reward_version=args.reward, difficulty = args.difficulty)
+        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed,
+             iter=args.iter, mirror=args.mirror, reward_version=args.reward,
+             difficulty = args.difficulty, fix_target=args.fix_target)
 
 
 

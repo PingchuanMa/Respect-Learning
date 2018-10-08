@@ -10,10 +10,12 @@ from reward import Reward
 
 class ProstheticsEnv(env.ProstheticsEnv):
 
-    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para=-0.4, mirror=False, reward_version=0, difficulty = 0 ):
+    def __init__(self, visualize = True, integrator_accuracy = 5e-5, bend_para=-0.4,
+                 mirror=False, reward_version=0, difficulty = 0, fix_target=False):
         
         self.mirror = mirror
         self.difficulty = difficulty
+        self.fix_target = fix_target
         super().__init__(visualize, integrator_accuracy, difficulty)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) 
@@ -65,11 +67,10 @@ class ProstheticsEnv(env.ProstheticsEnv):
         else:
             rew_ori = self.reward_origin_round2( state_desc )
 
-        rew_speed = param.w_speed * rew_ori
         rew_all = self.reward_func(state_desc, self.difficulty)
-        rew_all['speed'] = rew_speed
-        rew_total = sum(rew_all.values())
-        rew_total = param.rew_scale * (rew_total + param.rew_const)
+        rew_all['alive'] = param.rew_const
+        rew_total = sum(rew_all.values()) - self.get_activation_penalty()
+        rew_total *= param.rew_scale
         rew_all['original'] = rew_ori
         return rew_total, rew_all
 
@@ -92,7 +93,9 @@ class ProstheticsEnv(env.ProstheticsEnv):
         reward = 10.0
         
         return reward - penalty 
-        
+
+    def get_activation_penalty(self):
+        return np.sum(np.array(self.osim_model.get_activations())**2) * 0.001
 
     def step(self, action, project = True):
         self.prev_state_desc = self.get_state_desc()        
@@ -113,6 +116,15 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def action_process_mirror(self, action):
         return action[:-3]
+
+    def reset(self, project = True):
+        if param.rew_const > 0:
+            param.rew_const -= param.rew_const_decay
+        if self.fix_target:
+            self.targets = np.array([[1.25, .0, .0] for _ in range(self.time_limit + 1)])
+        else:
+            self.generate_new_targets()
+        return super(ProstheticsEnv, self).reset(project = project)
 
 
 class TestProstheticsEnv(ProstheticsEnv):
