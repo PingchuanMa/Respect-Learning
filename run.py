@@ -144,6 +144,7 @@ def main():
                             inter_op_parallelism_threads=ncpu)
     config.gpu_options.allow_growth = True
     print("We have {} cpus!".format(ncpu))
+    print("I am now running on {}!".format(MPI.Get_processor_name()))
     tf.Session(config=config).__enter__()
 
     #train/test
