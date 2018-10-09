@@ -242,7 +242,7 @@ def learn(env, policy_fn, *,
         elif schedule == 'linear':
             cur_lrmult =  max(1.0 - float(iters_so_far) / max_iters, 0.05)
         elif schedule == 'decay':
-            cur_lrmult == 1 / 3 ** (iters_so_far // (max_iters / 4.0))
+            cur_lrmult = 1 / 3 ** (iters_so_far // (max_iters / 4.0))
         else:
             raise NotImplementedError
 
