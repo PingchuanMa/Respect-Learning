@@ -33,7 +33,7 @@ else
   machines=TITANXP
 fi
 
-policy=yrh
+policy=mpc
 
 jobname=TEST
 step_per_iter=512
