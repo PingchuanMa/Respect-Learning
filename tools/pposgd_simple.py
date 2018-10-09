@@ -307,8 +307,8 @@ def learn(env, policy_fn, *,
             if name not in rewbuffer_all:
                 rewbuffer_all[name] = deque(maxlen=100)
             rewbuffer_all[name].extend(rews_i)
-        tb_summary(writer, "LearningRate", optim_stepsize * cur_lrmult, "General")
-        tb_summary(writer, "IterTime", time.time() - iter_start, "General")
+        tb_summary(writer, "LearningRate", optim_stepsize * cur_lrmult, iters_so_far, "General")
+        tb_summary(writer, "IterTime", time.time() - iter_start, iters_so_far, "General")
         logger.record_tabular("EpLenMean", np.mean(lenbuffer))
         tb_summary(writer, "EpisodeLength", np.mean(lenbuffer), iters_so_far, "General")
         logger.record_tabular("EpRewMean", np.mean(rewbuffer))
