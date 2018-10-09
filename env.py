@@ -11,12 +11,14 @@ from reward import Reward
 class ProstheticsEnv(env.ProstheticsEnv):
 
     def __init__(self, visualize=True, integrator_accuracy=5e-5, bend_para=-0.4,
-                 mirror=False, reward_version=0, difficulty=0, fix_target=False, no_acc=False):
+                 mirror=False, reward_version=0, difficulty=0, fix_target=False,
+                 no_acc=False, action_bias=0.0):
         
         self.mirror = mirror
         self.difficulty = difficulty
         self.fix_target = fix_target
         self.no_acc = no_acc
+        self.action_bias = action_bias
         super().__init__(visualize, integrator_accuracy, difficulty)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi ))
@@ -70,7 +72,6 @@ class ProstheticsEnv(env.ProstheticsEnv):
             rew_ori = self.reward_origin_round2( state_desc )
 
         rew_all = self.reward_func(state_desc, self.difficulty)
-        rew_all['alive'] = param.rew_const
         rew_total = sum(rew_all.values()) - self.get_activation_penalty()
         rew_total *= param.rew_scale
         rew_all['original'] = rew_ori
@@ -105,7 +106,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
         if self.mirror == True:
             action = self.action_process_mirror(action)
         
-        action = action / 2.0 + .5
+        action += self.action_bias
 
         self.osim_model.actuate(action)
         self.osim_model.integrate()
@@ -122,8 +123,6 @@ class ProstheticsEnv(env.ProstheticsEnv):
         return action[:-3]
 
     def reset(self, project = True):
-        if param.rew_const > 0:
-            param.rew_const -= param.rew_const_decay
         if self.fix_target:
             self.targets = np.array([[1.25, .0, .0] for _ in range(self.time_limit + 1)])
         else:
