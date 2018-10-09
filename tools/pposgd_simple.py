@@ -95,13 +95,14 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
         if not ep_rets_all and cur_ep_ret_all:
             for name in cur_ep_ret_all.keys():
                 ep_rets_all[name] = []
+                if 'original' in name:
+                    ep_rets_all[name + '_'] = []
         if new:
             ep_rets.append(cur_ep_ret)
             if ep_rets_all:
                 for name, val in cur_ep_ret_all.items():
-                    if 'original' in name:
-                        ep_rets_all[name + '_'].append(val)
-                        ep_rets_all[name].append(val / cur_ep_len)
+                    if 'original_' in name:
+                        ep_rets_all[name].append(val)
                     else:
                         ep_rets_all[name].append(val / cur_ep_len)
             ep_lens.append(cur_ep_len)
