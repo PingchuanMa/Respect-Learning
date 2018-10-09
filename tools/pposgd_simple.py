@@ -310,10 +310,10 @@ def learn(env, policy_fn, *,
         tb_summary(writer, "TotalReward", np.mean(rewbuffer), iters_so_far, "General")
         if rewbuffer_all:
             for name, val in rewbuffer_all.items():
-                logger.record_tabular("EpRewMean(" + name + ")", np.mean(rewbuffer_all[name]))
                 if 'original_' in name:
                     tb_summary(writer, "OriginalReward", np.mean(rewbuffer_all[name]), iters_so_far, "General")
                 else:
+                    logger.record_tabular("EpRewMean(" + name + ")", np.mean(rewbuffer_all[name]))
                     tb_summary(writer, name, np.mean(rewbuffer_all[name]), iters_so_far, "Reward")
         logger.record_tabular("EpThisIter", len(lens))
         episodes_so_far += len(lens)
