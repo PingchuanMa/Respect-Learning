@@ -101,10 +101,9 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
             ep_rets.append(cur_ep_ret)
             if ep_rets_all:
                 for name, val in cur_ep_ret_all.items():
-                    if 'original_' in name:
-                        ep_rets_all[name].append(val)
-                    else:
-                        ep_rets_all[name].append(val / cur_ep_len)
+                    if 'original' in name:
+                        ep_rets_all[name + '_'].append(val)
+                    ep_rets_all[name].append(val / cur_ep_len)
             ep_lens.append(cur_ep_len)
             cur_ep_ret = 0
             if cur_ep_ret_all:
@@ -311,10 +310,10 @@ def learn(env, policy_fn, *,
         if rewbuffer_all:
             for name, val in rewbuffer_all.items():
                 if 'original_' in name:
-                    tb_summary(writer, "OriginalReward", np.mean(rewbuffer_all[name]), iters_so_far, "General")
+                    tb_summary(writer, "OriginalReward", np.mean(val), iters_so_far, "General")
                 else:
-                    logger.record_tabular("EpRewMean(" + name + ")", np.mean(rewbuffer_all[name]))
-                    tb_summary(writer, name, np.mean(rewbuffer_all[name]), iters_so_far, "Reward")
+                    logger.record_tabular("EpRewMean(" + name + ")", np.mean(val))
+                    tb_summary(writer, name, np.mean(val), iters_so_far, "Reward")
         logger.record_tabular("EpThisIter", len(lens))
         episodes_so_far += len(lens)
         timesteps_so_far += sum(lens)
