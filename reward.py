@@ -166,6 +166,7 @@ class Reward():
 
         if difficulty > 0:
             target_vel = state_desc["target_vel"]
+            print(target_vel)
         else:
             target_vel = [3,0,0]
 
@@ -175,21 +176,22 @@ class Reward():
             Reward.calc_distance_square( target_vel, state_desc["body_pos"]["torso"]))
 
         rew_speed_fix = 0.0
-        rew_speed_fix += state_desc["target_vel"][2] ** 2 - (state_desc["body_vel"]["pelvis"][2] - state_desc["target_vel"][2]) ** 2
-        rew_speed_fix += state_desc["target_vel"][0] ** 2 - (state_desc["body_vel"]["pelvis"][0] - state_desc["target_vel"][0]) ** 2
+        rew_speed_fix += target_vel[2] ** 2 - (state_desc["body_vel"]["pelvis"][2] - target_vel[2]) ** 2
+        rew_speed_fix += target_vel[0] ** 2 - (state_desc["body_vel"]["pelvis"][0] - target_vel[0]) ** 2
         rew_speed_fix *= param.w_speed
 
-        gamma = 200.0
+        gamma = 1.0
         if rew_speed_fix < 0:
             rew_speed_fix = gamma * np.exp(rew_speed_fix / gamma)
         else:
             rew_speed_fix += gamma
+        rew_speed_fix /= gamma
 
         rew_bend = param.w_bend * (
-                max( min( -state_desc["joint_pos"]["knee_l"][0] ,
-                     state_desc["joint_pos"]["knee_l"][0] - 2 * self.bend_para ), 0. ) + 
-                max( min( -state_desc["joint_pos"]["knee_r"][0] ,
-                     state_desc["joint_pos"]["knee_r"][0] - 2 * self.bend_para ), 0. ))
+                max(min(-state_desc["joint_pos"]["knee_l"][0],
+                    state_desc["joint_pos"]["knee_l"][0] - 2 * self.bend_para), 0.0) + 
+                max(min(-state_desc["joint_pos"]["knee_r"][0],
+                    state_desc["joint_pos"]["knee_r"][0] - 2 * self.bend_para), 0.0))
 
         rew_all = {'straight': rew_straight, 'bend': rew_bend, 'speed': rew_speed_fix}
         return rew_all
@@ -198,6 +200,7 @@ class Reward():
 
         if difficulty > 0:
             target_vel = state_desc["target_vel"]
+            print(target_vel)
         else:
             target_vel = [3,0,0]
 
@@ -207,21 +210,22 @@ class Reward():
             Reward.calc_distance_square( target_vel, state_desc["body_pos"]["torso"]))
 
         rew_speed_fix = 0.0
-        rew_speed_fix += state_desc["target_vel"][2] ** 2 - (state_desc["misc"]["mass_center_vel"][2] - state_desc["target_vel"][2]) ** 2
-        rew_speed_fix += state_desc["target_vel"][0] ** 2 - (state_desc["misc"]["mass_center_vel"][0] - state_desc["target_vel"][0]) ** 2
+        rew_speed_fix += target_vel[2] ** 2 - (state_desc["misc"]["mass_center_vel"][2] - target_vel[2]) ** 2
+        rew_speed_fix += target_vel[0] ** 2 - (state_desc["misc"]["mass_center_vel"][0] - target_vel[0]) ** 2
         rew_speed_fix *= param.w_speed
 
-        gamma = 200.0
+        gamma = 1.0
         if rew_speed_fix < 0:
             rew_speed_fix = gamma * np.exp(rew_speed_fix / gamma)
         else:
             rew_speed_fix += gamma
+        rew_speed_fix /= gamma
 
         rew_bend = param.w_bend * (
-                max( min( -state_desc["joint_pos"]["knee_l"][0] ,
-                     state_desc["joint_pos"]["knee_l"][0] - 2 * self.bend_para ), 0. ) + 
-                max( min( -state_desc["joint_pos"]["knee_r"][0] ,
-                     state_desc["joint_pos"]["knee_r"][0] - 2 * self.bend_para ), 0. ))
+                max(min(-state_desc["joint_pos"]["knee_l"][0],
+                    state_desc["joint_pos"]["knee_l"][0] - 2 * self.bend_para), 0.0) + 
+                max(min(-state_desc["joint_pos"]["knee_r"][0],
+                    state_desc["joint_pos"]["knee_r"][0] - 2 * self.bend_para), 0.0))
 
         rew_all = {'straight': rew_straight, 'bend': rew_bend, 'speed': rew_speed_fix}
         return rew_all
