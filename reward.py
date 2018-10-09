@@ -166,7 +166,6 @@ class Reward():
 
         if difficulty > 0:
             target_vel = state_desc["target_vel"]
-            print(target_vel)
         else:
             target_vel = [3,0,0]
 
@@ -200,7 +199,6 @@ class Reward():
 
         if difficulty > 0:
             target_vel = state_desc["target_vel"]
-            print(target_vel)
         else:
             target_vel = [3,0,0]
 
