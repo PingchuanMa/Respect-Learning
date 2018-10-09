@@ -7,7 +7,7 @@ fi
 
 python=/mnt/lustre/DATAshare2/mapingchuan/anaconda3/envs/opensim-rl/bin/python
 
-identifier=origin
+identifier=res-125-rew9
 
 num_cpus=8
 num_gpus=0
