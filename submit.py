@@ -51,6 +51,24 @@ def submit(identifier, policy_fn, seed, iter, mirror):
     client.submit()
 
 
+def xia_ji_ba_submit():
+    client = Client(remote_base)
+
+    # Create environment
+    observation = client.env_create(crowdai_token, env_id="ProstheticsEnv")
+    env = ProstheticsEnv(visualize=True, difficulty=1)
+
+    while True:
+        action = env.action_space.sample().tolist()
+        [observation, reward, done, info] = client.env_step(action, True)
+        print(observation, reward, done, info)
+        if done:
+            observation = client.env_reset()
+            if not observation:
+                break
+
+    client.submit()
+
 def main():
 
     parser = argparse.ArgumentParser(description='Submit.')
@@ -87,4 +105,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    xia_ji_ba_submit()

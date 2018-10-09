@@ -107,6 +107,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
             action = self.action_process_mirror(action)
         
         action += self.action_bias
+        action = np.clip(action, 0.0, 1.0)
 
         self.osim_model.actuate(action)
         self.osim_model.integrate()
