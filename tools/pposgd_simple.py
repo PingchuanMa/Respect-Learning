@@ -235,10 +235,14 @@ def learn(env, policy_fn, *,
         elif max_seconds and time.time() - tstart >= max_seconds:
             break
 
+        iter_start = time.time()
+
         if schedule == 'constant':
             cur_lrmult = 1.0
         elif schedule == 'linear':
             cur_lrmult =  max(1.0 - float(iters_so_far) / max_iters, 0.05)
+        elif schedule == 'decay':
+            cur_lrmult == 1 / 3 ** (iters_so_far // (max_iters / 4.0))
         else:
             raise NotImplementedError
 
@@ -303,6 +307,8 @@ def learn(env, policy_fn, *,
             if name not in rewbuffer_all:
                 rewbuffer_all[name] = deque(maxlen=100)
             rewbuffer_all[name].extend(rews_i)
+        tb_summary(writer, "LearningRate", optim_stepsize * cur_lrmult, "General")
+        tb_summary(writer, "IterTime", time.time() - iter_start, "General")
         logger.record_tabular("EpLenMean", np.mean(lenbuffer))
         tb_summary(writer, "EpisodeLength", np.mean(lenbuffer), iters_so_far, "General")
         logger.record_tabular("EpRewMean", np.mean(rewbuffer))
