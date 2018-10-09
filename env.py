@@ -19,7 +19,9 @@ class ProstheticsEnv(env.ProstheticsEnv):
         self.no_acc = no_acc
         super().__init__(visualize, integrator_accuracy, difficulty)
         self.bend_para = bend_para
-        self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi )) 
+        self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi ))
+        if self.fix_target:
+            self.time_limit = 512
 
         if mirror:
             self.reset()
