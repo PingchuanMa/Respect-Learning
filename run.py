@@ -42,7 +42,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
     
     #learn
     pi = pposgd_simple.learn(env, policy_fn,
-                             max_timesteps=num_timesteps,
+                             max_iters=num_timesteps,
                              timesteps_per_actorbatch=timesteps_per_actorbatch,
                              clip_param=0.2, entcoeff=ent,
                              symcoeff=symcoeff,
@@ -112,7 +112,7 @@ def main():
     logger.configure()
     parser = argparse.ArgumentParser(description='Train.')
     parser.add_argument('--id', type=str, default='origin')
-    parser.add_argument('--step', type=int, default=1e9)
+    parser.add_argument('--step', type=int, default=2e3)
     parser.add_argument('--bend', type=float, default=-0.4)
     parser.add_argument('--ent', type=float, default=0.001)
     parser.add_argument('--sym', type=float, default=0.001)
