@@ -100,10 +100,12 @@ class ProstheticsEnv(env.ProstheticsEnv):
         return np.sum(np.array(self.osim_model.get_activations())**2) * 0.001
 
     def step(self, action, project = True):
-        self.prev_state_desc = self.get_state_desc()        
+        self.prev_state_desc = self.get_state_desc()
 
         if self.mirror == True:
             action = self.action_process_mirror(action)
+        
+        action = action / 2.0 + .5
 
         self.osim_model.actuate(action)
         self.osim_model.integrate()
