@@ -31,7 +31,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def is_done(self):
         state_desc = self.get_state_desc()
-        return state_desc["body_pos"]["pelvis"][1] < 0.6 or np.abs(state_desc["body_pos"]["pelvis"][2]) > 0.6   # encourage going straight
+        return state_desc["body_pos"]["pelvis"][1] < 0.6 # or np.abs(state_desc["body_pos"]["pelvis"][2]) > 0.6   # encourage going straight
 
     def get_observation(self):
         state_desc = self.get_state_desc()
@@ -89,6 +89,8 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def step(self, action, project = True):
         self.prev_state_desc = self.get_state_desc()        
+
+        action = np.clip(action,0,1)        
 
         if self.mirror == True:
             action = self.action_process_mirror(action)
