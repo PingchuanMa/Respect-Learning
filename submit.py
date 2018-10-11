@@ -121,7 +121,7 @@ def main():
     config.gpu_options.allow_growth = True
     tf.Session(config=config).__enter__()
 
-    submit(args.id, policy_fn, args.seed, args.iter, args.mirror, arg.fix_target)
+    submit(args.id, policy_fn, args.seed, args.iter, args.mirror, args.fix_target)
 
 
 if __name__ == '__main__':
