@@ -156,7 +156,15 @@ class Reward():
         if difficulty > 0:
             # 10 is the reward without penalty in round2
             # [1.25, 0, 0] is the original target vel
-            rew_counter = -param.w_speed * param.rew_counter
+            # rew_counter = -param.w_speed * ( 10 - ( 1.25 ** 2) - (1.25 ** 2) )
+            
+            # Big penalty for not matching the vector on the X,Z projection.
+            # No penalty for the vertical axis
+            penalty  = state_desc["target_vel"][0]**2
+            penalty += state_desc["target_vel"][2]**2
+            
+            rew_counter = -param.w_speed * (10 - penalty )
+        
 
         rew_all = {'straight': rew_straight, 'bend': rew_bend, "conter": rew_counter }
         return rew_all

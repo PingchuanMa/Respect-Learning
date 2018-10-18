@@ -90,7 +90,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
     def step(self, action, project = True):
         self.prev_state_desc = self.get_state_desc()        
 
-        action = np.clip(action,0,1)        
+        # action = np.clip(action,0,1)        
 
         if self.mirror == True:
             action = self.action_process_mirror(action)

@@ -5,7 +5,7 @@ action_repeat = 2
 rew_scale = 10
 rew_const = 0
 
-rew_counter = 7
+rew_counter = 0
 
 w_speed = 5
 w_pose = 1
