@@ -8,9 +8,14 @@ from baselines.common.mpi_moments import mpi_moments
 from mpi4py import MPI
 from collections import deque, OrderedDict
 from tools.utils import save_state, save_rewards, load_state
-
+from .mlp_policy import MlpPolicy
+from .mlp_policy import DenselyRawMlpPolicy
 
 def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_repeat=1):
+    flag=False
+    if isinstance(pi, DenselyRawMlpPolicy ):
+        flag = True
+
     mirror = mirror_id is not None
     t = 0
     ac = env.action_space.sample() # not used, just so we have the datatype
@@ -30,25 +35,37 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
     vpreds = np.zeros(horizon, 'float32')
     news = np.zeros(horizon, 'int32')
     acs = np.array([ac for _ in range(horizon)])
+
+    if flag:
+        target_vels = np.array( [ [0,0] for _ in range(horizon)] )
+
     prevacs = acs.copy()
     if mirror:
         mirror_obs = obs.copy()
         mirror_acs = acs.copy()
 
+
     while True:
         prevac = ac
-        ac, vpred = pi.act(stochastic, np.array(ob))
+        if flag:
+            # target vel is the first & second element in observation
+            ac, vpred = pi.act(stochastic, np.array(ob), np.array(ob[0:2]) )
+        else:
+            ac, vpred = pi.act(stochastic, np.array(ob))
         if mirror:
             mirror_ob = ob[mirror_id[0]]
             if len(mirror_id)>2:
                 mirror_ob *= mirror_id[2]
-            mirror_ac, _ = pi.act(stochastic, np.array(mirror_ob))
+            if flag:
+                mirror_ac, _ = pi.act(stochastic, np.array(mirror_ob), np.array( mirror_ob[0:2] ) )
+            else:
+                mirror_ac, _ = pi.act(stochastic, np.array(mirror_ob))
             mirror_ac = mirror_ac[mirror_id[1]]
         # Slight weirdness here because we need value function at time T
         # before returning segment [0, T-1] so we get the correct
         # terminal value
         if t > 0 and t % horizon == 0:
-            seg_dict = {"ob" : obs, "rew" : rews, "vpred" : vpreds, "new" : news,
+            seg_dict = {"ob" : obs, "target_vel": target_vels, "rew" : rews, "vpred" : vpreds, "new" : news,
                         "ac" : acs, "prevac" : prevacs, "nextvpred": vpred * (1 - new),
                         "ep_rets" : ep_rets, "ep_rets_all" : ep_rets_all, "ep_lens" : ep_lens}
             if mirror:
@@ -62,10 +79,15 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
             ep_lens = []
         i = t % horizon
         obs[i] = ob
+
+        if flag:
+            target_vels[i] = ob[0:2]
+
         vpreds[i] = vpred
         news[i] = new
         acs[i] = ac
         prevacs[i] = prevac
+        
         if mirror:
             mirror_obs[i] = mirror_ob
             mirror_acs[i] = mirror_ac
@@ -146,6 +168,7 @@ def learn(env, policy_fn, *,
           iter, play, action_repeat=1):
     # Setup losses and stuff
     # ----------------------------------------
+
     ob_space = env.observation_space
     ac_space = env.action_space
     mirror = hasattr(env, 'mirror_id')
@@ -159,6 +182,13 @@ def learn(env, policy_fn, *,
     clip_param = clip_param * lrmult # Annealed cliping parameter epislon
 
     ob = U.get_placeholder_cached(name="ob")
+    
+    flag=False
+    if isinstance(pi, DenselyRawMlpPolicy ):
+        flag = True
+
+    if flag:
+        target_vel = U.get_placeholder_cached( name="target_vel" )
     ac = pi.pdtype.sample_placeholder([None])
     if mirror:
         mirror_ob = U.get_placeholder(name="mirror_ob", dtype=tf.float32, shape=[None] + list(ob_space.shape))
@@ -186,6 +216,8 @@ def learn(env, policy_fn, *,
 
     var_list = pi.get_trainable_variables()
     inputs = [ob, ac, atarg, ret, lrmult]
+    if flag:
+        inputs += [target_vel]
     if mirror:
         inputs += [mirror_ob, mirror_ac]
     lossandgrad = U.function(inputs, losses + [U.flatgrad(total_loss, var_list)])
@@ -244,13 +276,13 @@ def learn(env, policy_fn, *,
         add_vtarg_and_adv(seg, gamma, lam)
 
         # ob, ac, atarg, ret, td1ret = map(np.concatenate, (obs, acs, atargs, rets, td1rets))
-        ob, ac, atarg, tdlamret = seg["ob"], seg["ac"], seg["adv"], seg["tdlamret"]
+        ob, ac, atarg, tdlamret, target_vel = seg["ob"], seg["ac"], seg["adv"], seg["tdlamret"], seg["target_vel"]
         if mirror:
             mirror_ob, mirror_ac = seg["mirror_ob"], seg["mirror_ac"]
 
         vpredbefore = seg["vpred"] # predicted value function before udpate
         atarg = (atarg - atarg.mean()) / atarg.std() # standardized advantage function estimate
-        d_dict = dict(ob=ob, ac=ac, atarg=atarg, vtarg=tdlamret)
+        d_dict = dict(ob=ob, ac=ac, atarg=atarg, vtarg=tdlamret, target_vel=target_vel)
         if mirror:
             d_dict["mirror_ob"] = mirror_ob
             d_dict["mirror_ac"] = mirror_ac
@@ -265,6 +297,8 @@ def learn(env, policy_fn, *,
             losses = [] # list of tuples, each of which gives the loss for a minibatch
             for batch in d.iterate_once(optim_batchsize):
                 batches = [batch["ob"], batch["ac"], batch["atarg"], batch["vtarg"], cur_lrmult]
+                if flag:
+                    batches += [ batch["target_vel"] ]
                 if mirror:
                     batches += [batch["mirror_ob"], batch["mirror_ac"]]
                 *newlosses, g = lossandgrad(*batches)
@@ -274,6 +308,8 @@ def learn(env, policy_fn, *,
         losses = []
         for batch in d.iterate_once(optim_batchsize):
             batches = [batch["ob"], batch["ac"], batch["atarg"], batch["vtarg"], cur_lrmult]
+            if flag:
+                batches += [ batch["target_vel"] ]
             if mirror:
                 batches += [batch["mirror_ob"], batch["mirror_ac"]]
             newlosses = compute_losses(*batches)

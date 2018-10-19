@@ -118,11 +118,16 @@ def main():
     parser.add_argument('--activation', type=str, default='selu')
     parser.add_argument('--reward', type=int, default=0)
     parser.add_argument('--difficulty', type=int, default=0)
-    
+    parser.add_argument('--dense_info', default=False, action="store_true")
+
     args = parser.parse_args()
 
-    def policy_fn(name, ob_space, ac_space):
+    def common_policy_fn(name, ob_space, ac_space):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
+            hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
+
+    def dense_info_policy_fn(name, ob_space, ac_space):
+        return mlp_policy.DenselyRawMlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
             hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
 
     #tf configs
@@ -134,14 +139,18 @@ def main():
     config.gpu_options.allow_growth = True
     tf.Session(config=config).__enter__()
 
+    if args.dense_info:
+        assert args.difficulty == 1, "dense info net should only be used in round2"
+        policy_fn = dense_info_policy_fn
+    else:
+        policy_fn = common_policy_fn
+
     #train/test
     if not args.play:
         train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter,
             seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym, mirror=args.mirror, reward_version=args.reward, difficulty= args.difficulty)
     else:
         test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror, reward_version=args.reward, difficulty = args.difficulty)
-
-
 
 if __name__ == '__main__':
     main()
