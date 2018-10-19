@@ -18,12 +18,16 @@ from util import state_desc_to_ob
 import param
 
 # Settings
-remote_base = "http://grader.crowdai.org:1729"
-with open('./token.txt', 'r') as f:
-    crowdai_token = f.readline()
 
 
 def submit(identifier, policy_fn, seed, iter, mirror, difficulty):
+
+    if difficulty == 0:
+        remote_base = "http://grader.crowdai.org:1729"
+    else:
+        remote_base = "http://grader.crowdai.org:1730"
+    with open('./token.txt', 'r') as f:
+        crowdai_token = f.readline()
 
     client = Client(remote_base)
 
@@ -34,12 +38,15 @@ def submit(identifier, policy_fn, seed, iter, mirror, difficulty):
     pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, play=True, bend=0, ent=0, symcoeff=0, reward_version=0, difficulty=difficulty)
     load_state(identifier, iter)
 
+    count = 0
+
     while True:
-        ob = state_desc_to_ob(observation, difficulty ,mirror=mirror)
+        ob = state_desc_to_ob(observation, difficulty, mirror=mirror)
         action = pi.act(False, np.array(ob))[0].tolist()
         if mirror:
             action = action[:-3]
         for _ in range(param.action_repeat):
+            count += 1
             [observation, reward, done, info] = client.env_step(action, True)
             if done:
                 break
@@ -49,7 +56,7 @@ def submit(identifier, policy_fn, seed, iter, mirror, difficulty):
                 break
 
     client.submit()
-
+    print("Submission Episode Length:{}".format(count))
 
 def main():
 
@@ -63,7 +70,7 @@ def main():
     parser.add_argument('--activation', type=str, default='selu')
     parser.add_argument('--noise', type=float, default=0.2)
     parser.add_argument('--difficulty', type=int, default=0)
-
+    
     args = parser.parse_args()
 
     # def policy_fn(name, ob_space, ac_space):
