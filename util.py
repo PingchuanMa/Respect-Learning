@@ -6,6 +6,8 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False,):
     res = []
     pelvis = None
 
+    print( state_desc["body_vel"]["pelvis"] )
+
     if mirror:
         for body_part in ["toes_l", "talus_l", "calcn_l", "tibia_l", "pros_foot_r", "pros_tibia_r"]:
             mirror_name = (body_part[:-1] + "r" ) if body_part[-1] == 'l' else (body_part[:-1] + "l" )
@@ -38,6 +40,7 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False,):
     if difficulty > 0:
         # target vel (veltical is meaningless)
         res += state_desc["target_vel"][0::2]
+        # res += [1.25, 0]
 
     for body_part in body_list:
         cur = []

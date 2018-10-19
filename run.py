@@ -75,11 +75,14 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty):
     observation = env.reset()
     reward = 0
     reward_ori = 0
+    
+    count = 0
     while True:
         action = pi.act(False, np.array(observation))[0]
         rew = 0
         rew_ori = 0
         for ai in range(param.action_repeat):
+            count += 1
             observation, r, done, r_all = env.step(action)
             r_ori = r_all['original']
             rew = rew * ai / (ai + 1) + r / (ai + 1)
@@ -95,6 +98,8 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty):
             # observation = env.reset()
             # reward = 0
             # reward_ori = 0
+    
+    print(count)
 
 
 def main():
