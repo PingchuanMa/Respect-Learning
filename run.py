@@ -63,7 +63,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
     return pi
 
 
-def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty):
+def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, dense_info):
     
     pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror, play=True, reward_version=reward_version , difficulty=difficulty)
     load_state(identifier, iter)
@@ -75,11 +75,17 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty):
     observation = env.reset()
     reward = 0
     reward_ori = 0
+    c = 0
     while True:
-        action = pi.act(False, np.array(observation))[0]
+        # print(np.sum(np.array(env.osim_model.get_activations())**2) * 0.001)
+        if dense_info:
+            action = pi.act(False, np.array(observation), np.array( observation[0:2] ) )[0]
+        else:
+            action = pi.act(False, np.array(observation))[0]
         rew = 0
         rew_ori = 0
         for ai in range(param.action_repeat):
+            c+=1
             observation, r, done, r_all = env.step(action)
             r_ori = r_all['original']
             rew = rew * ai / (ai + 1) + r / (ai + 1)
@@ -95,7 +101,7 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty):
             # observation = env.reset()
             # reward = 0
             # reward_ori = 0
-
+    print(c)
 
 def main():
 
@@ -144,13 +150,16 @@ def main():
         policy_fn = dense_info_policy_fn
     else:
         policy_fn = common_policy_fn
+        print( " ???? " )
 
+    print( args.dense_info )
+    # print(  )
     #train/test
     if not args.play:
         train(identifier=args.id, policy_fn=policy_fn, num_timesteps=args.step, steps_per_iter=args.step_per_iter,
             seed=args.seed, cont=args.cont, iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym, mirror=args.mirror, reward_version=args.reward, difficulty= args.difficulty)
     else:
-        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror, reward_version=args.reward, difficulty = args.difficulty)
+        test(identifier=args.id, policy_fn=policy_fn, seed=args.seed, iter=args.iter, mirror=args.mirror, reward_version=args.reward, difficulty = args.difficulty, dense_info=args.dense_info)
 
 if __name__ == '__main__':
     main()

@@ -26,9 +26,8 @@ class MlpPolicy(mlp_policy.MlpPolicy):
             for i, size in enumerate(hid_layer_sizes):
                 last_out = activation(tf.layers.dense(last_out, size, name="fc%i" % (i + 1),
                                                       kernel_initializer=U.normc_initializer(1.0)))
-                
-                if layer_norm:
-                    last_out = tc.layers.layer_norm(last_out, center=True, scale=False)
+                # if layer_norm:
+                #     last_out = tc.layers.layer_norm(last_out, center=True, scale=False)
 
             self.vpred = tf.layers.dense(last_out, 1, name='final', kernel_initializer=U.normc_initializer(1.0))[:, 0]
 
@@ -38,7 +37,7 @@ class MlpPolicy(mlp_policy.MlpPolicy):
                 last_out = tf.layers.dense(last_out, size, name="fc%i" % (i + 1),
                                                       kernel_initializer=U.normc_initializer(1.0))
                 if layer_norm:
-                    last_out = tc.layers.layer_norm(last_out, center=True, scale=False)
+                    last_out = tc.layers.layer_norm(last_out, center=True, scale=True)
 
                 noise = tf.random_normal(shape=tf.shape(last_out), mean=0.0, stddev=noise_std, dtype=tf.float32)
                 last_out = activation(last_out + noise)
@@ -85,8 +84,8 @@ class DenselyRawMlpPolicy(mlp_policy.MlpPolicy):
                 last_out = activation(tf.layers.dense(last_out, size, name="fc%i" % (i + 1),
                                                       kernel_initializer=U.normc_initializer(1.0)))
                 
-                if layer_norm:
-                    last_out = tc.layers.layer_norm(last_out, center=True, scale=False)
+                # if layer_norm:
+                #     last_out = tc.layers.layer_norm(last_out, center=True, scale=False)
 
                 last_out = tf.concat( [ last_out, target_vel ], 1 )
 
@@ -98,7 +97,7 @@ class DenselyRawMlpPolicy(mlp_policy.MlpPolicy):
                 last_out = tf.layers.dense(last_out, size, name="fc%i" % (i + 1),
                                                       kernel_initializer=U.normc_initializer(1.0))
                 if layer_norm:
-                    last_out = tc.layers.layer_norm(last_out, center=True, scale=True)
+                    last_out = tc.layers.layer_norm(last_out, center=True, scale=False)
 
                 noise = tf.random_normal(shape=tf.shape(last_out), mean=0.0, stddev=noise_std, dtype=tf.float32)
                 last_out = activation(last_out + noise)

@@ -38,6 +38,7 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False,):
     if difficulty > 0:
         # target vel (veltical is meaningless)
         res += state_desc["target_vel"][0::2]
+        # res += [ 1.25, 0 ]
 
     for body_part in body_list:
         cur = []

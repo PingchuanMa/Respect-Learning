@@ -39,8 +39,11 @@ def submit(identifier, policy_fn, seed, iter, mirror, difficulty):
     load_state(identifier, iter)
 
     count = 0
-
+    total_rew = 0
+    episodes_len = []
+    episodes_rew = []
     while True:
+        print("Target_vel:{}, Current Vel:{}".format(observation["target_vel"], observation["body_vel"]["pelvis"]))
         ob = state_desc_to_ob(observation, difficulty, mirror=mirror)
         action = pi.act(False, np.array(ob))[0].tolist()
         if mirror:
@@ -48,15 +51,22 @@ def submit(identifier, policy_fn, seed, iter, mirror, difficulty):
         for _ in range(param.action_repeat):
             count += 1
             [observation, reward, done, info] = client.env_step(action, True)
+            print("step reward:{}, done_info:{}".format(reward, done))
+            total_rew += reward
             if done:
                 break
         if done:
             observation = client.env_reset()
+            episodes_len.append(count)
+            episodes_rew.append(total_rew)
+            total_rew = 0
+            count = 0
             if not observation:
                 break
 
     client.submit()
     print("Submission Episode Length:{}".format(count))
+    print(episodes_len)
 
 def main():
 
