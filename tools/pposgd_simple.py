@@ -278,7 +278,11 @@ def learn(env, policy_fn, *,
         add_vtarg_and_adv(seg, gamma, lam)
 
         # ob, ac, atarg, ret, td1ret = map(np.concatenate, (obs, acs, atargs, rets, td1rets))
-        ob, ac, atarg, tdlamret, target_vel = seg["ob"], seg["ac"], seg["adv"], seg["tdlamret"], seg["target_vel"]
+        ob, ac, atarg, tdlamret = seg["ob"], seg["ac"], seg["adv"], seg["tdlamret"]
+
+        if flag:
+            target_vel = seg["target_vel"]
+
         if mirror:
             mirror_ob, mirror_ac = seg["mirror_ob"], seg["mirror_ac"]
 
