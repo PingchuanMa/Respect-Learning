@@ -187,7 +187,7 @@ def learn(env, policy_fn, *,
     ob = U.get_placeholder_cached(name="ob")
     
     flag=False
-    if isinstance(pi, DenselyRawMlpPolicy ):
+    if isinstance(pi, DenselyRawMlpPolicy ) or isinstance(pi, DenseResPolicy):
         flag = True
 
     if flag:
@@ -291,7 +291,7 @@ def learn(env, policy_fn, *,
         atarg = (atarg - atarg.mean()) / atarg.std() # standardized advantage function estimate
         d_dict = dict(ob=ob, ac=ac, atarg=atarg, vtarg=tdlamret)
         if flag:
-            d_dict["target_vel"]= target_vel
+            d_dict["target_vel"] = target_vel
         if mirror:
             d_dict["mirror_ob"] = mirror_ob
             d_dict["mirror_ac"] = mirror_ac
@@ -309,7 +309,7 @@ def learn(env, policy_fn, *,
                 if flag:
                     batches += [ batch["target_vel"] ]
                 if mirror:
-                    batches += [batch["mirror_ob"], batch["mirror_ac"]]
+                    batches += [ batch["mirror_ob"], batch["mirror_ac"]]
                 *newlosses, g = lossandgrad(*batches)
                 adam.update(g, optim_stepsize * cur_lrmult)
                 losses.append(newlosses)
