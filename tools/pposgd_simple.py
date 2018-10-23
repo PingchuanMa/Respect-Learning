@@ -10,10 +10,11 @@ from collections import deque, OrderedDict
 from tools.utils import save_state, save_rewards, load_state
 from .mlp_policy import MlpPolicy
 from .mlp_policy import DenselyRawMlpPolicy
+from .mlp_policy import DenseResPolicy
 
 def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_repeat=1):
     flag=False
-    if isinstance(pi, DenselyRawMlpPolicy ):
+    if isinstance(pi, DenselyRawMlpPolicy ) or isinstance(pi, DenseResPolicy):
         flag = True
 
     mirror = mirror_id is not None
