@@ -166,7 +166,7 @@ def main():
         if not args.res:
             policy_fn = common_policy_fn
         else:
-            policy_fn = res_dense_policy_fn
+            policy_fn = res_policy_fn
 
     print( args.dense_info )
     # print(  )
