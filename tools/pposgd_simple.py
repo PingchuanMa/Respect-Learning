@@ -289,7 +289,9 @@ def learn(env, policy_fn, *,
 
         vpredbefore = seg["vpred"] # predicted value function before udpate
         atarg = (atarg - atarg.mean()) / atarg.std() # standardized advantage function estimate
-        d_dict = dict(ob=ob, ac=ac, atarg=atarg, vtarg=tdlamret, target_vel=target_vel)
+        d_dict = dict(ob=ob, ac=ac, atarg=atarg, vtarg=tdlamret)
+        if flag:
+            d_dict["target_vel"]= target_vel
         if mirror:
             d_dict["mirror_ob"] = mirror_ob
             d_dict["mirror_ac"] = mirror_ac
