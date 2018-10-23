@@ -65,9 +65,11 @@ def traj_segment_generator(pi, env, horizon, stochastic, mirror_id=None, action_
         # before returning segment [0, T-1] so we get the correct
         # terminal value
         if t > 0 and t % horizon == 0:
-            seg_dict = {"ob" : obs, "target_vel": target_vels, "rew" : rews, "vpred" : vpreds, "new" : news,
+            seg_dict = {"ob" : obs, "rew" : rews, "vpred" : vpreds, "new" : news,
                         "ac" : acs, "prevac" : prevacs, "nextvpred": vpred * (1 - new),
                         "ep_rets" : ep_rets, "ep_rets_all" : ep_rets_all, "ep_lens" : ep_lens}
+            if flag:
+                seg_dict["target_vel"] = target_vels
             if mirror:
                 seg_dict['mirror_ob'] = mirror_obs
                 seg_dict['mirror_ac'] = mirror_acs
