@@ -125,6 +125,8 @@ def main():
     parser.add_argument('--reward', type=int, default=0)
     parser.add_argument('--difficulty', type=int, default=0)
     parser.add_argument('--dense_info', default=False, action="store_true")
+    parser.add_argument('--res', default=False, action="store_true")
+
 
     args = parser.parse_args()
 
@@ -134,6 +136,15 @@ def main():
 
     def dense_info_policy_fn(name, ob_space, ac_space):
         return mlp_policy.DenselyRawMlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
+            hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
+
+    def res_dense_policy_fn(name, ob_space, ac_space):
+        return mlp_policy.DenseResPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
+            hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
+
+
+    def res_policy_fn(name, ob_space, ac_space):
+        return mlp_policy.ResPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
             hid_layer_sizes=args.net, noise_std=args.noise, layer_norm=args.layer_norm, activation=getattr(tf.nn, args.activation))
 
     #tf configs
@@ -147,10 +158,15 @@ def main():
 
     if args.dense_info:
         assert args.difficulty == 1, "dense info net should only be used in round2"
-        policy_fn = dense_info_policy_fn
+        if not args.res:
+            policy_fn = dense_info_policy_fn
+        else:
+            policy_fn = res_dense_policy_fn
     else:
-        policy_fn = common_policy_fn
-        print( " ???? " )
+        if not args.res:
+            policy_fn = common_policy_fn
+        else:
+            policy_fn = res_dense_policy_fn
 
     print( args.dense_info )
     # print(  )

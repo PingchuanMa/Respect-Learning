@@ -126,3 +126,150 @@ class DenselyRawMlpPolicy(mlp_policy.MlpPolicy):
     def act(self, stochastic, ob, target_vel):
         ac1, vpred1 =  self._act(stochastic, ob[None], target_vel[None] )
         return ac1[0], vpred1[0]
+
+class ResPolicy(mlp_policy.MlpPolicy):
+
+    def _init(self, ob_space, ac_space, hid_layer_sizes, gaussian_fixed_var=True, noise_std=0.0, layer_norm=False, activation=tf.nn.relu, **kwargs):
+        assert isinstance(ob_space, gym.spaces.Box)
+
+        self.pdtype = pdtype = make_pdtype(ac_space)
+        sequence_length = None
+
+        size = hid_layer_sizes[0]
+
+        ob = U.get_placeholder(name="ob", dtype=tf.float32, shape=[sequence_length] + list(ob_space.shape))
+
+        with tf.variable_scope("obfilter"):
+            self.ob_rms = RunningMeanStd(shape=ob_space.shape)
+
+        with tf.variable_scope('vf'):
+            obz = tf.clip_by_value((ob - self.ob_rms.mean) / self.ob_rms.std, -5.0, 5.0)
+            res = None
+            last_out = obz
+            for i, _ in enumerate(hid_layer_sizes):
+                last_out = tf.layers.dense(last_out, size, name="fc%i" % (i + 1), use_bias=not layer_norm,
+                                           kernel_initializer=tf.variance_scaling_initializer(scale=1.0, mode='fan_in'))
+                if layer_norm:
+                    last_out = tc.layers.layer_norm(last_out, center=True, scale=False)
+                if res is None:
+                    last_out = activation(last_out)
+                else:
+                    last_out = activation(last_out) + res
+                res = last_out
+            self.vpred = tf.layers.dense(last_out, 1, name='final', kernel_initializer=tf.variance_scaling_initializer(scale=1.0, mode='fan_in'))[:, 0]
+
+        with tf.variable_scope('pol'):
+            res = None
+            last_out = obz
+            for i, _ in enumerate(hid_layer_sizes):
+                last_out = tf.layers.dense(last_out, size, name="fc%i" % (i + 1), use_bias=not layer_norm,
+                                           kernel_initializer=tf.variance_scaling_initializer(scale=1.0, mode='fan_in'))
+                if layer_norm:
+                    last_out = tc.layers.layer_norm(last_out, center=True, scale=False)
+                if noise_std > 0.0:
+                    noise = tf.random_normal(shape=tf.shape(last_out), mean=0.0, stddev=noise_std, dtype=tf.float32)
+                    last_out += noise
+                if res is None:
+                    last_out = activation(last_out)
+                else:
+                    last_out = activation(last_out) + res
+                res = last_out
+            if gaussian_fixed_var and isinstance(ac_space, gym.spaces.Box):
+                mean = tf.layers.dense(last_out, pdtype.param_shape()[0]//2, name='final',
+                                       kernel_initializer=U.normc_initializer(0.01))
+                logstd = tf.get_variable(name="logstd", shape=[1, pdtype.param_shape()[0]//2],
+                                         initializer=tf.zeros_initializer())
+                pdparam = tf.concat([mean, mean * 0.0 + logstd], axis=1)
+            else:
+                pdparam = tf.layers.dense(last_out, pdtype.param_shape()[0], name='final',
+                                          kernel_initializer=U.normc_initializer(0.01))
+
+        self.pd = pdtype.pdfromflat(pdparam)
+
+        self.state_in = []
+        self.state_out = []
+
+        stochastic = tf.placeholder(dtype=tf.bool, shape=())
+        ac = U.switch(stochastic, self.pd.sample(), self.pd.mode())
+        self._act = U.function([stochastic, ob], [ac, self.vpred])
+
+class DenseResPolicy(mlp_policy.MlpPolicy):
+
+    def _init(self, ob_space, ac_space, hid_layer_sizes, gaussian_fixed_var=True, noise_std=0.0, layer_norm=False, activation=tf.nn.relu, **kwargs):
+        assert isinstance(ob_space, gym.spaces.Box)
+
+        self.pdtype = pdtype = make_pdtype(ac_space)
+        sequence_length = None
+
+        size = hid_layer_sizes[0]
+
+        ob = U.get_placeholder(name="ob", dtype=tf.float32, shape=[sequence_length] + list(ob_space.shape))
+
+        target_vel = U.get_placeholder( name="target_vel", dtype=tf.float32, shape=[sequence_length] + [2]  )
+
+        with tf.variable_scope("obfilter"):
+            self.ob_rms = RunningMeanStd(shape=ob_space.shape)
+
+        with tf.variable_scope('vf'):
+            obz = tf.clip_by_value((ob - self.ob_rms.mean) / self.ob_rms.std, -5.0, 5.0)
+            res = None
+            last_out = obz
+            for i, _ in enumerate(hid_layer_sizes):
+
+                last_out = tf.concat( [ last_out, target_vel ], 1 )
+
+                last_out = tf.layers.dense(last_out, size, name="fc%i" % (i + 1), use_bias=not layer_norm,
+                                           kernel_initializer=tf.variance_scaling_initializer(scale=1.0, mode='fan_in'))
+                if layer_norm:
+                    last_out = tc.layers.layer_norm(last_out, center=True, scale=False)
+
+                if res is None:
+                    last_out = activation(last_out)
+                else:
+                    last_out = activation(last_out) + res
+                res = last_out
+            self.vpred = tf.layers.dense(last_out, 1, name='final', kernel_initializer=tf.variance_scaling_initializer(scale=1.0, mode='fan_in'))[:, 0]
+
+        with tf.variable_scope('pol'):
+            res = None
+            last_out = obz
+            for i, _ in enumerate(hid_layer_sizes):
+                
+                last_out = tf.concat( [ last_out, target_vel ], 1 )
+                
+                last_out = tf.layers.dense(last_out, size, name="fc%i" % (i + 1), use_bias=not layer_norm,
+                                           kernel_initializer=tf.variance_scaling_initializer(scale=1.0, mode='fan_in'))
+                if layer_norm:
+                    last_out = tc.layers.layer_norm(last_out, center=True, scale=False)
+                if noise_std > 0.0:
+                    noise = tf.random_normal(shape=tf.shape(last_out), mean=0.0, stddev=noise_std, dtype=tf.float32)
+                    last_out += noise
+
+                if res is None:
+                    last_out = activation(last_out)
+                else:
+                    last_out = activation(last_out) + res
+                res = last_out
+            if gaussian_fixed_var and isinstance(ac_space, gym.spaces.Box):
+                mean = tf.layers.dense(last_out, pdtype.param_shape()[0]//2, name='final',
+                                       kernel_initializer=U.normc_initializer(0.01))
+                logstd = tf.get_variable(name="logstd", shape=[1, pdtype.param_shape()[0]//2],
+                                         initializer=tf.zeros_initializer())
+                pdparam = tf.concat([mean, mean * 0.0 + logstd], axis=1)
+            else:
+                pdparam = tf.layers.dense(last_out, pdtype.param_shape()[0], name='final',
+                                          kernel_initializer=U.normc_initializer(0.01))
+
+        self.pd = pdtype.pdfromflat(pdparam)
+
+        self.state_in = []
+        self.state_out = []
+
+        stochastic = tf.placeholder(dtype=tf.bool, shape=())
+        ac = U.switch(stochastic, self.pd.sample(), self.pd.mode())
+        # self._act = U.function([stochastic, ob], [ac, self.vpred])
+        self._act = U.function([stochastic, ob, target_vel], [ac, self.vpred])
+
+    def act(self, stochastic, ob, target_vel):
+        ac1, vpred1 =  self._act(stochastic, ob[None], target_vel[None] )
+        return ac1[0], vpred1[0]
