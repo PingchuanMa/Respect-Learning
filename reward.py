@@ -233,7 +233,9 @@ class Reward():
             Reward.calc_distance_square( target_vel, state_desc["body_pos"]["head"]) +
             Reward.calc_distance_square( target_vel, state_desc["body_pos"]["torso"]))
 
-        body_vel = np.maximum(0, np.array(state_desc["body_vel"]["pelvis"]))
+        # body_vel = np.maximum(0, np.array(state_desc["body_vel"]["pelvis"]))
+        body_vel = np.array(state_desc["body_vel"]["pelvis"])
+        body_vel[ np.array(state_desc["body_vel"]["pelvis"]) * np.array( target_vel ) < 0 ] = 0
 
         rew_speed_fix = param.w_speed * (state_desc["target_vel"][0] ** 2 + state_desc["target_vel"][2] ** 2 -
             (state_desc["target_vel"][0] - body_vel[0]) ** 2 -
