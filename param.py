@@ -1,4 +1,4 @@
-accuracy = 5e-3
+accuracy = 1e-3
 action_repeat = 2
 
 # reward

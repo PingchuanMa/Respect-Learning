@@ -124,10 +124,14 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def reset(self, project = True):
         if self.fix_target:
-            self.targets = np.array([[1.25, .0, .0] for _ in range(self.time_limit + 1)])
+            self.targets = np.array([[1.25, .0, .0] for _ in range(self.time_limit * 2)])
         else:
             self.generate_new_targets()
         return super(ProstheticsEnv, self).reset(project = project)
+
+    def generate_new_targets(self):
+        if not self.fix_target:
+            super(ProstheticsEnv, self).generate_new_targets()
 
 
 class TestProstheticsEnv(ProstheticsEnv):

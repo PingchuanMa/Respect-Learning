@@ -220,3 +220,24 @@ class Reward():
 
         rew_all = {'straight': rew_straight, 'bend': rew_bend, 'speed': rew_speed_fix}
         return rew_all
+
+    def v10(self, state_desc, difficulty):
+
+        if difficulty > 0:
+            target_vel = state_desc["target_vel"]
+        else:
+            target_vel = [3,0,0]
+
+        rew_straight = -param.w_straight * (
+            Reward.calc_distance_square( target_vel, state_desc["body_pos"]["pelvis"]) +
+            Reward.calc_distance_square( target_vel, state_desc["body_pos"]["head"]) +
+            Reward.calc_distance_square( target_vel, state_desc["body_pos"]["torso"]))
+
+        body_vel = np.maximum(0, np.array(state_desc["body_vel"]["pelvis"]))
+
+        rew_speed_fix = param.w_speed * (state_desc["target_vel"][0] ** 2 + state_desc["target_vel"][2] ** 2 -
+            (state_desc["target_vel"][0] - body_vel[0]) ** 2 -
+            (state_desc["target_vel"][2] - body_vel[2]) ** 2)
+
+        rew_all = {'straight': rew_straight, 'speed': rew_speed_fix}
+        return rew_all
