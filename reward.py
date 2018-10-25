@@ -137,7 +137,8 @@ class Reward():
     def v7(self, state_desc, difficulty ):
         
         if difficulty > 0:
-            target_vel = state_desc["target_vel"]
+            #target_vel = state_desc["target_vel"]
+            target_vel = [1.25, 0, 0 ]
         else:
             target_vel = [3,0,0]
 
@@ -160,8 +161,8 @@ class Reward():
             
             # Big penalty for not matching the vector on the X,Z projection.
             # No penalty for the vertical axis
-            penalty  = state_desc["target_vel"][0]**2
-            penalty += state_desc["target_vel"][2]**2
+            penalty  = target_vel[0]**2
+            penalty += target_vel[2]**2
             
             rew_counter = -param.w_speed * (10 - penalty )
         

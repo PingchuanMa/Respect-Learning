@@ -18,7 +18,7 @@ from util import state_desc_to_ob
 import param
 
 # Settings
-remote_base = "http://grader.crowdai.org:1729"
+remote_base = "http://grader.crowdai.org:1730"
 with open('./token.txt', 'r') as f:
     crowdai_token = f.readline()
 
