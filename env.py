@@ -12,13 +12,14 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def __init__(self, visualize=True, integrator_accuracy=5e-5, bend_para=-0.4,
                  mirror=False, reward_version=0, difficulty=0, fix_target=False,
-                 no_acc=False, action_bias=0.0):
+                 no_acc=False, action_bias=0.0, target_adv=0):
         
         self.mirror = mirror
         self.difficulty = difficulty
         self.fix_target = fix_target
         self.no_acc = no_acc
         self.action_bias = action_bias
+        self.target_adv = target_adv
         super().__init__(visualize, integrator_accuracy, difficulty)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi ))
@@ -134,6 +135,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
     def generate_new_targets(self):
         if not self.fix_target:
             super(ProstheticsEnv, self).generate_new_targets()
+            self.targets = np.concatenate([self.targets[self.target_adv:], np.repeat([self.targets[-1]], self.target_adv, axis=0)])
 
 
 class TestProstheticsEnv(ProstheticsEnv):
