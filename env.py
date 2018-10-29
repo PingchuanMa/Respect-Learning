@@ -39,7 +39,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def is_done(self):
         state_desc = self.get_state_desc()
-        return state_desc["body_pos"]["pelvis"][1] < 0.6 or np.abs(state_desc["body_pos"]["pelvis"][2]) > 0.6   # encourage going straight
+        return state_desc["body_pos"]["pelvis"][1] < 0.6 # or np.abs(state_desc["body_pos"]["pelvis"][2]) > 0.6   # encourage going straight
 
     def get_observation(self):
         state_desc = self.get_state_desc()
@@ -72,6 +72,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
             rew_ori = self.reward_origin_round2( state_desc )
 
         rew_all = self.reward_func(state_desc, self.difficulty)
+        rew_all['const'] = param.rew_const 
         rew_total = sum(rew_all.values()) - self.get_activation_penalty()
         rew_total *= param.rew_scale
         rew_all['original'] = rew_ori
@@ -124,10 +125,14 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def reset(self, project = True):
         if self.fix_target:
-            self.targets = np.array([[1.25, .0, .0] for _ in range(self.time_limit + 1)])
+            self.targets = np.array([[1.25, .0, .0] for _ in range(self.time_limit * 2)])
         else:
             self.generate_new_targets()
         return super(ProstheticsEnv, self).reset(project = project)
+
+    def generate_new_targets(self):
+        if not self.fix_target:
+            super(ProstheticsEnv, self).generate_new_targets()
 
 
 class TestProstheticsEnv(ProstheticsEnv):
