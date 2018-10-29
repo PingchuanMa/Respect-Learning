@@ -23,12 +23,12 @@ import param
 
 def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
           symcoeff, mirror, reward_version, difficulty, cont=False, iter=None,
-          play=False, fix_target=False, no_acc=False, action_bias=0.0, target_adv=0):
+          play=False, fix_target=False, no_acc=False, action_bias=0.0, target_adv=0, target_tau=0):
 
     env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy,
                          bend_para=bend, mirror=mirror, reward_version=reward_version,
                          difficulty=difficulty, fix_target=fix_target, no_acc=no_acc, 
-                         action_bias=action_bias, target_adv=target_adv)
+                         action_bias=action_bias, target_adv=target_adv, target_tau=target_tau)
 
     if cont:
         assert iter is not None
@@ -68,7 +68,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
 
 
 def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, fix_target, 
-    no_acc=False, action_bias=0.0, target_adv=0):
+    no_acc=False, action_bias=0.0, target_adv=0, target_tau=0):
     
     pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror,
                play=True, reward_version=reward_version , difficulty=difficulty,
@@ -136,6 +136,7 @@ def main():
     parser.add_argument('--fix_target', default=False, action='store_true')
     parser.add_argument('--action_bias', type=float, default=0.0)
     parser.add_argument('--target_adv', type=int, default=0)
+    parser.add_argument('--target_tau', type=float, default=0)
     
     args = parser.parse_args()
 
@@ -173,13 +174,13 @@ def main():
               iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym,
               mirror=args.mirror, reward_version=args.reward, no_acc=args.no_acc,
               difficulty=args.difficulty, fix_target=args.fix_target, action_bias=args.action_bias,
-              target_adv=args.target_adv)
+              target_adv=args.target_adv, target_tau=args.target_tau)
     else:
         test(identifier=args.id, policy_fn=policy_fn, seed=args.seed,
              iter=args.iter, mirror=args.mirror, reward_version=args.reward,
              difficulty=args.difficulty, fix_target=args.fix_target,
              no_acc=args.no_acc, action_bias=args.action_bias,
-             target_adv=args.target_adv)
+             target_adv=args.target_adv, target_tau=args.target_tau)
 
 
 
