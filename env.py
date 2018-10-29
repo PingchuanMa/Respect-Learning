@@ -34,7 +34,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
             self.action_space = ( [0.0] * (self.osim_model.get_action_space_size() + 3), [1.0] * (self.osim_model.get_action_space_size() + 3) )
             self.action_space = spaces.Box(np.array(self.action_space[0]), np.array(self.action_space[1]) )
         
-        self.reward_set = Reward(self.bend_para, self.bend_base)
+        self.reward_set = Reward(self.bend_para, self.bend_base, difficulty)
         self.reward_func = getattr(self.reward_set, 'v' + str(reward_version))
 
     def is_done(self):
@@ -71,7 +71,8 @@ class ProstheticsEnv(env.ProstheticsEnv):
         else:
             rew_ori = self.reward_origin_round2( state_desc )
 
-        rew_all = self.reward_func(state_desc, self.difficulty)
+        self.reward_set.set_target_vel(state_desc)
+        rew_all = self.reward_func(state_desc)
         rew_all['const'] = param.rew_const 
         rew_total = sum(rew_all.values()) - self.get_activation_penalty()
         rew_total *= param.rew_scale
