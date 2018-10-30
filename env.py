@@ -12,18 +12,24 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def __init__(self, visualize=True, integrator_accuracy=5e-5, bend_para=-0.4,
                  mirror=False, reward_version=0, difficulty=0, fix_target=False,
-                 no_acc=False, action_bias=0.0):
+                 no_acc=False, action_bias=0.0, target_adv=0, target_tau=0):
         
         self.mirror = mirror
         self.difficulty = difficulty
         self.fix_target = fix_target
         self.no_acc = no_acc
         self.action_bias = action_bias
+        self.target_adv = target_adv
+        self.target_tau = target_tau
+        self.target_vel = None
         super().__init__(visualize, integrator_accuracy, difficulty)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi ))
         if self.fix_target:
             self.time_limit = 512
+
+        # self.reset()
+        # self.test_soft_update()
 
         if mirror:
             self.reset()
@@ -34,16 +40,30 @@ class ProstheticsEnv(env.ProstheticsEnv):
             self.action_space = ( [0.0] * (self.osim_model.get_action_space_size() + 3), [1.0] * (self.osim_model.get_action_space_size() + 3) )
             self.action_space = spaces.Box(np.array(self.action_space[0]), np.array(self.action_space[1]) )
         
-        self.reward_set = Reward(self.bend_para, self.bend_base)
+        self.reward_set = Reward(self.bend_para, self.bend_base, difficulty)
         self.reward_func = getattr(self.reward_set, 'v' + str(reward_version))
 
     def is_done(self):
         state_desc = self.get_state_desc()
-        return state_desc["body_pos"]["pelvis"][1] < 0.6 or np.abs(state_desc["body_pos"]["pelvis"][2]) > 0.6   # encourage going straight
+        return state_desc["body_pos"]["pelvis"][1] < 0.6 # or np.abs(state_desc["body_pos"]["pelvis"][2]) > 0.6   # encourage going straight
+
+    
+    def soft_update_target_vel( self, prev_target, current_target):
+        
+        if prev_target is None:
+            return current_target
+        return [ self.target_tau * p + (1-self.target_tau) * c for p,c in zip( prev_target, current_target ) ]
+
+    # def test_soft_update(self):
+    #     t_v = None
+    #     for c_t in self.targets:
+    #         t_v = self.soft_update_target_vel( t_v, c_t )
+    #         print(t_v)
 
     def get_observation(self):
         state_desc = self.get_state_desc()
-        return state_desc_to_ob(state_desc, self.difficulty, self.mirror, self.no_acc)
+        self.target_vel = self.soft_update_target_vel( self.target_vel, state_desc["target_vel"] )
+        return state_desc_to_ob(state_desc, self.difficulty, self.mirror, self.no_acc, self.target_vel)
 
     def get_cascade_arch(self):
         state_desc = self.get_state_desc()
@@ -73,7 +93,9 @@ class ProstheticsEnv(env.ProstheticsEnv):
         else:
             rew_ori = self.reward_origin_round2( state_desc )
 
-        rew_all = self.reward_func(state_desc, self.difficulty)
+        self.reward_set.set_target_vel(state_desc)
+        rew_all = self.reward_func(state_desc)
+        rew_all['const'] = param.rew_const 
         rew_total = sum(rew_all.values()) - self.get_activation_penalty()
         rew_total *= param.rew_scale
         rew_all['original'] = rew_ori
@@ -134,6 +156,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
     def generate_new_targets(self):
         if not self.fix_target:
             super(ProstheticsEnv, self).generate_new_targets()
+            self.targets = np.concatenate([self.targets[self.target_adv:], np.repeat([self.targets[-1]], self.target_adv, axis=0)])
 
 
 class TestProstheticsEnv(ProstheticsEnv):
