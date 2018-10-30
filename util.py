@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 
-def state_desc_to_ob(state_desc, difficulty, mirror=False, no_acc=False, fix_target=False):
+def state_desc_to_ob(state_desc, difficulty, mirror=False, no_acc=False, fix_target=False, current_target_vel = None, target_tau = 0):
     # Augmented environment from the L2R challenge
     res = []
     pelvis = None
@@ -45,7 +45,10 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False, no_acc=False, fix_tar
     if difficulty > 0:
         # target vel (veltical is meaningless)
         # res += state_desc["target_vel"][0::2]
-        target_vel = state_desc["target_vel"]
+        if current_target_vel is None:
+            target_vel = state_desc["target_vel"]
+        else:
+            target_vel = current_target_vel
 
     if fix_target:
         target_vel = [1.25, 0, 0]
