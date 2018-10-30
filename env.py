@@ -29,7 +29,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
             self.reset()
             # additional information are already added into the state descriptions in self.reset() where
             # self.get_observation are called 
-            self.mirror_id = get_mirror_id(self.get_state_desc(), difficulty = self.difficulty)
+            self.mirror_id = get_mirror_id(self.get_state_desc(), self.difficulty, self.no_acc )
 
             self.action_space = ( [0.0] * (self.osim_model.get_action_space_size() + 3), [1.0] * (self.osim_model.get_action_space_size() + 3) )
             self.action_space = spaces.Box(np.array(self.action_space[0]), np.array(self.action_space[1]) )
@@ -52,7 +52,9 @@ class ProstheticsEnv(env.ProstheticsEnv):
     def get_observation_space_size(self):
         if self.prosthetic == True:
             if self.mirror:
-                return 404
+                if self.no_acc:
+                    return 404
+                return 529
             if self.no_acc:
                 return 326
             return 412
@@ -124,10 +126,14 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def reset(self, project = True):
         if self.fix_target:
-            self.targets = np.array([[1.25, .0, .0] for _ in range(self.time_limit + 1)])
+            self.targets = np.array([[1.25, .0, .0] for _ in range(self.time_limit * 2)])
         else:
             self.generate_new_targets()
         return super(ProstheticsEnv, self).reset(project = project)
+
+    def generate_new_targets(self):
+        if not self.fix_target:
+            super(ProstheticsEnv, self).generate_new_targets()
 
 
 class TestProstheticsEnv(ProstheticsEnv):

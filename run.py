@@ -54,7 +54,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
                              schedule='decay',
                              identifier=identifier,
                              save_result=True,
-                             save_interval=50,
+                             save_interval=10,
                              reward_list=reward_list,
                              reward_ori_list=reward_ori_list,
                              cont=cont,
@@ -73,7 +73,7 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, 
                fix_target=fix_target, no_acc=no_acc, action_bias=action_bias)
     load_state(identifier, iter)
 
-    env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version,
+    env = TestProstheticsEnv(visualize=False, mirror=mirror, reward_version=reward_version,
                              difficulty=difficulty, fix_target=fix_target, no_acc=no_acc, action_bias=action_bias)
     set_global_seeds(seed)
 

@@ -6,7 +6,7 @@ import json
 from mpi4py import MPI
 import datetime
 import numpy as np
-from tensorboardX import SummaryWriter
+#from tensorboardX import SummaryWriter
 
 import os
 result_path = os.path.dirname(os.path.abspath(__file__)) + '/../results/'
@@ -60,16 +60,18 @@ def load_rewards(identifier, iters_so_far):
 
 
 def get_tb_writer(identifier):
-    if MPI.COMM_WORLD.Get_rank() == 0:
-        os.makedirs(os.path.join(result_path, 'tensorboard', identifier), exist_ok=True)
-        return SummaryWriter(log_dir=os.path.join(result_path, 'tensorboard', identifier))
-    else:
-        return None
+    #if MPI.COMM_WORLD.Get_rank() == 0:
+    #    os.makedirs(os.path.join(result_path, 'tensorboard', identifier), exist_ok=True)
+    #    return SummaryWriter(log_dir=os.path.join(result_path, 'tensorboard', identifier))
+    #else:
+    return None
 
 def tb_summary(writer, name, value, ite, domain=None):
-    if MPI.COMM_WORLD.Get_rank() == 0:
-        writer.add_scalar(name if domain is None else '%s/%s' % (domain, name), value, ite)
+    #if MPI.COMM_WORLD.Get_rank() == 0:
+    #    writer.add_scalar(name if domain is None else '%s/%s' % (domain, name), value, ite)
+    pass
 
 def close_tb_writer(writer):
-    if MPI.COMM_WORLD.Get_rank() == 0:
-        writer.close()
+    #if MPI.COMM_WORLD.Get_rank() == 0:
+        #writer.close()
+    pass

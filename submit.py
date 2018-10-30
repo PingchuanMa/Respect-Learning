@@ -18,7 +18,7 @@ from util import state_desc_to_ob
 import param
 
 # Settings
-remote_base = "http://grader.crowdai.org:1730"
+remote_base = "http://grader.crowdai.org:1729"
 with open('./token.txt', 'r') as f:
     crowdai_token = f.readline()
 
@@ -31,25 +31,35 @@ def submit(identifier, policy_fn, seed, iter, mirror, fix_target):
     observation = client.env_create(crowdai_token, env_id="ProstheticsEnv")
 
     # IMPLEMENTATION OF YOUR CONTROLLER
-    pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, play=True, bend=0, ent=0, symcoeff=0, reward_version=0, difficulty=1)
+    pi = train(identifier, policy_fn, 1, 1, seed, mirror=mirror, play=True, bend=0, ent=0, symcoeff=0, reward_version=0, difficulty=0)
     load_state(identifier, iter)
 
+    count = 0
+    total_rew = 0
+    episodes_len = []
+    episodes_rew = []
     while True:
-        ob = state_desc_to_ob(observation, difficulty=1, mirror=mirror, fix_target=fix_target)
+        #print("Target_vel:{}, Current Vel:{}".format(observation["target_vel"], observation["body_vel"]["pelvis"]))
+        ob = state_desc_to_ob(observation, difficulty=0, mirror=mirror, fix_target=fix_target)
         action = pi.act(False, np.array(ob))[0].tolist()
         if mirror:
             action = action[:-3]
-        # for _ in range(param.action_repeat):
-        [observation, reward, done, info] = client.env_step(action, True)
-            # if done:
-                # break
+        for _ in range(param.action_repeat):
+            [observation, reward, done, info] = client.env_step(action, True)
+            print("step reward:{}, done_info:{}".format(reward, done))
+            if done:
+                break
         if done:
             observation = client.env_reset()
+            episodes_len.append(count)
+            episodes_rew.append(total_rew)
+            total_rew = 0
+            count = 0
             if not observation:
                 break
 
     client.submit()
-
+    print("Episodes Length:{}".format(episodes_len))
 
 def xia_ji_ba_submit():
     client = Client(remote_base)

@@ -220,3 +220,75 @@ class Reward():
 
         rew_all = {'straight': rew_straight, 'bend': rew_bend, 'speed': rew_speed_fix}
         return rew_all
+
+    def v10(self, state_desc, difficulty):
+
+        if difficulty > 0:
+            target_vel = state_desc["target_vel"]
+        else:
+            target_vel = [3,0,0]
+
+        rew_straight = -param.w_straight * (
+            Reward.calc_distance_square( target_vel, state_desc["body_pos"]["pelvis"]) +
+            Reward.calc_distance_square( target_vel, state_desc["body_pos"]["head"]) +
+            Reward.calc_distance_square( target_vel, state_desc["body_pos"]["torso"]))
+
+        body_vel = np.array(state_desc["body_vel"]["pelvis"])
+
+        rew_speed_fix = param.w_speed * (target_vel[0] ** 2 + target_vel[2] ** 2 -
+            (target_vel[0] - body_vel[0]) ** 2 -
+            (target_vel[2] - body_vel[2]) ** 2
+        )
+
+        rew_speed_fix = np.maximum(0, rew_speed_fix )
+
+        rew_bend = param.w_bend * (
+                max( min( -state_desc["joint_pos"]["knee_l"][0] ,
+                     state_desc["joint_pos"]["knee_l"][0] - 2 * self.bend_para ), 0. ) + 
+                max( min( -state_desc["joint_pos"]["knee_r"][0] ,
+                     state_desc["joint_pos"]["knee_r"][0] - 2 * self.bend_para ), 0. ))
+
+
+        rew_all = {'straight': rew_straight, 'speed': rew_speed_fix, 'rew_bend': rew_bend}
+        return rew_all
+
+    def v11(self, state_desc, difficulty ):
+        
+        if difficulty > 0:
+            target_vel = state_desc["target_vel"]
+        else:
+            target_vel = [3,0,0]
+
+        rew_straight = -param.w_straight * (
+            Reward.calc_distance_square( target_vel, state_desc["body_pos"]["pelvis"]) +
+            Reward.calc_distance_square( target_vel, state_desc["body_pos"]["head"]) +
+            Reward.calc_distance_square( target_vel, state_desc["body_pos"]["torso"]))
+
+        rew_bend = param.w_bend * (
+                max( min( -state_desc["joint_pos"]["knee_l"][0] ,
+                     state_desc["joint_pos"]["knee_l"][0] - 2 * self.bend_para ), 0. ) + 
+                max( min( -state_desc["joint_pos"]["knee_r"][0] ,
+                     state_desc["joint_pos"]["knee_r"][0] - 2 * self.bend_para ), 0. ))
+
+        rew_counter = 0
+        if difficulty > 0:
+            # 10 is the reward without penalty in round2
+            # [1.25, 0, 0] is the original target vel
+            # rew_counter = -param.w_speed * ( 10 - ( 1.25 ** 2) - (1.25 ** 2) )
+            
+            # Big penalty for not matching the vector on the X,Z projection.
+            # No penalty for the vertical axis
+            penalty  = state_desc["target_vel"][0]**2
+            penalty += state_desc["target_vel"][2]**2
+            
+            rew_counter = -param.w_speed * (10 - penalty )
+        
+        body_vel = np.maximum(0, np.array(state_desc["body_vel"]["pelvis"]))
+
+        rew_speed_fix = param.w_speed * (target_vel[0] ** 2 + target_vel[2] ** 2 -
+            (target_vel[0] - body_vel[0]) ** 2 -
+            (target_vel[2] - body_vel[2]) ** 2)
+
+
+        rew_all = {'speed': rew_speed_fix,'straight': rew_straight, 'bend': rew_bend, "conter": rew_counter }
+        return rew_all

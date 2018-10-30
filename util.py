@@ -7,9 +7,13 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False, no_acc=False, fix_tar
     pelvis = None
 
     if mirror:
+        if no_acc:
+            info_types = ["body_pos", "body_pos_rot", "body_vel", "body_vel_rot"]
+        else:
+            info_types = ["body_pos", "body_pos_rot", "body_vel", "body_vel_rot", "body_acc", "body_acc_rot"]
         for body_part in ["toes_l", "talus_l", "calcn_l", "tibia_l", "pros_foot_r", "pros_tibia_r"]:
             mirror_name = (body_part[:-1] + "r" ) if body_part[-1] == 'l' else (body_part[:-1] + "l" )
-            for info_type in ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"]:
+            for info_type in info_types:
                 state_desc[info_type][mirror_name] = [ 0 ] * len(state_desc[info_type][body_part])
         
         for muscle in ['gastroc_l', 'soleus_l', 'tib_ant_l']:
@@ -60,6 +64,7 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False, no_acc=False, fix_tar
             cur += state_desc[info_type][body_part]
         if body_part == "pelvis":
             pelvis = copy.deepcopy(cur)
+            cur[0:3] = [0]*3
             for i in range(3):
                 cur[i + 6] -= target_vel[i]
             res += cur
@@ -188,7 +193,7 @@ def cascade_helper(state_desc, difficulty, mirror=False):
     end_points['misc'] = (start, end)
     return end_points
 
-def state_desc_to_ob_idx(state_desc, difficulty):
+def state_desc_to_ob_idx(state_desc, difficulty, no_acc=False):
     # Augmented environment from the L2R challenge
 
     idx_dict = {}
@@ -197,30 +202,33 @@ def state_desc_to_ob_idx(state_desc, difficulty):
 
     append_list = lambda x ,y: list(range( x, x + y ))
 
-    if difficulty > 0:
-        # target vel (veltical is meaningless)
-        shift_factor += [ 1, 1 ]
-        mirror_obs_idx += append_list( len(mirror_obs_idx) , 2 )
+    # if difficulty > 0:
+    #     # target vel (veltical is meaningless)
+    #     shift_factor += [ 1, 1 ]
+    #     mirror_obs_idx += append_list( len(mirror_obs_idx) , 2 )
 
     idx_dict["body_part"] = {}
 
     # "pelvis"
-    shift_factor += [1, 1, 1] * 3
+    c = 4 if no_acc else 6
+
+    shift_factor += [1, 1, 1] * c
     idx_dict["body_part"]["pelvis"] = len(mirror_obs_idx)
-    mirror_obs_idx += append_list( len(mirror_obs_idx) , 9 )
+    mirror_obs_idx += append_list( len(mirror_obs_idx) , 3 * c )
 
     body_list = [ "head", "torso", "toes_l", "toes_r", "talus_l", "talus_r", "calcn_l", "calcn_r", \
         "tibia_l", "tibia_r", "femur_l", "femur_r", "pros_foot_l", "pros_foot_r", "pros_tibia_l", "pros_tibia_r"]
 
+    c = 4 if no_acc else 6
     for body_part in body_list:
         # ["body_pos", "body_vel", "body_pos_rot", "body_vel_rot"] total 4 * 3 items
         if "_r" in body_part or "_l" in body_part:
-            shift_factor += [1, 1, -1] * 4
+            shift_factor += [1, 1, -1] * c
         else:
-            shift_factor += [1, 1, 1] * 4
+            shift_factor += [1, 1, 1] * c
 
         idx_dict["body_part"][body_part] = len(mirror_obs_idx)
-        mirror_obs_idx += append_list( len(mirror_obs_idx) , 12 )
+        mirror_obs_idx += append_list( len(mirror_obs_idx) , 3*c )
         
         if "_r" in body_part and body_part[:-1]+"l" in idx_dict["body_part"]:
             mirror_part_idx = idx_dict["body_part"][body_part[:-1]+"l"]
@@ -229,9 +237,11 @@ def state_desc_to_ob_idx(state_desc, difficulty):
 
     idx_dict["joints"] = {}
 
+    c = 2 if no_acc else 3
+
     for joint in ["ankle_l", "ankle_r", "back", "hip_l", "hip_r", "knee_l", "knee_r"]:
         
-        num = len(state_desc['joint_pos'][joint]) * 2
+        num = len(state_desc['joint_pos'][joint]) * 3
         shift_factor += [1] * num
 
         idx_dict["joints"][joint] = len(mirror_obs_idx)
@@ -243,9 +253,9 @@ def state_desc_to_ob_idx(state_desc, difficulty):
                 mirror_obs_idx[ -num :  ] , mirror_obs_idx[mirror_part_idx: mirror_part_idx + num ]
 
     # special case for "ground_pelvis" 6 * 2 items
-    shift_factor += [1 , 1, -1] * 4
+    shift_factor += [1 , 1, -1] * 2 * c
     idx_dict["joints"]["ground_pelvis"] = len(mirror_obs_idx)
-    mirror_obs_idx += append_list( len(mirror_obs_idx) , 12 )
+    mirror_obs_idx += append_list( len(mirror_obs_idx) , 3 * 2 * c )
 
     idx_dict["muscles"] = {}
     for muscle in sorted(state_desc["muscles"].keys()):
@@ -280,11 +290,10 @@ def state_desc_to_ob_idx(state_desc, difficulty):
     shift_factor[ idx_dict["forces"]["foot_l"] : idx_dict["forces"]["foot_l"] + 18 ] = [1, 1, -1] * 6
     shift_factor[ idx_dict["forces"]["foot_r"] : idx_dict["forces"]["foot_r"] + 18 ] = [1, 1, -1] * 6
         
-
-        
+    c = 2 if no_acc else 3
     # for misc info
-    shift_factor += [1] * 6
-    mirror_obs_idx += append_list( len(mirror_obs_idx) , 6 )
+    shift_factor += [1] * 3*c
+    mirror_obs_idx += append_list( len(mirror_obs_idx) , 3*c )
 
     return mirror_obs_idx, shift_factor
 
@@ -311,12 +320,12 @@ def state_desc_to_ob_idx(state_desc, difficulty):
 """
 
 
-def get_mirror_id( state_desc, difficulty ):
+def get_mirror_id( state_desc, difficulty, no_acc ):
     # 0  ~ 7  right
     # 8  ~ 15 left
     # 16 ~ 18 left only
     act_idx = [ 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 19, 20, 21, 16, 17, 18 ]
-    ob_idx, shift_factor = state_desc_to_ob_idx( state_desc, difficulty )
+    ob_idx, shift_factor = state_desc_to_ob_idx( state_desc, difficulty, no_acc )
     print(len(act_idx))
     print(len(ob_idx))
     print(len(shift_factor))
