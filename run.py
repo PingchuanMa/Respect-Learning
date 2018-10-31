@@ -94,7 +94,8 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, 
         for ai in range(param.action_repeat):
             c+=1
             state_desc = env.get_state_desc()
-            print("Target_vel:{}, Current_vel:{}".format(state_desc["target_vel"], state_desc["body_vel"]["pelvis"]))
+            if difficulty > 0:
+                print("Target_vel:{}, Current_vel:{}".format(state_desc["target_vel"], state_desc["body_vel"]["pelvis"]))
             observation, r, done, r_all = env.step(action)
             r_ori = r_all['original']
             rew = rew * ai / (ai + 1) + r / (ai + 1)
