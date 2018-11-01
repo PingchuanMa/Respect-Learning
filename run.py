@@ -24,13 +24,13 @@ import param
 def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
           symcoeff, mirror, reward_version, difficulty, cont=False, iter=None,
           play=False, fix_target=False, no_acc=False, action_bias=0.0, target_adv=0, target_tau=0,
-          random_target=False):
+          random_target=False, target_vx=1.25):
 
     env = ProstheticsEnv(visualize=False, integrator_accuracy=param.accuracy,
                          bend_para=bend, mirror=mirror, reward_version=reward_version,
                          difficulty=difficulty, fix_target=fix_target, no_acc=no_acc, 
                          action_bias=action_bias, target_adv=target_adv, target_tau=target_tau,
-                         random_target=random_target)
+                         random_target=random_target, target_vx=target_vx)
 
     if cont:
         assert iter is not None
@@ -70,7 +70,7 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
 
 
 def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, fix_target, 
-    no_acc=False, action_bias=0.0, target_adv=0, target_tau=0, random_target=False):
+    no_acc=False, action_bias=0.0, target_adv=0, target_tau=0, random_target=False, target_vx=1.25):
     
     pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror,
                play=True, reward_version=reward_version , difficulty=difficulty,
@@ -80,7 +80,7 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, 
     env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version,
                              difficulty=difficulty, fix_target=fix_target, no_acc=no_acc, 
                              action_bias=action_bias, target_adv=target_adv, target_tau=target_tau,
-                             random_target=random_target)
+                             random_target=random_target, target_vx=target_vx)
     set_global_seeds(seed)
 
     # pi = train(identifier, policy_fn, 1, 1, seed, play=True)
@@ -105,6 +105,7 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, 
             rew_ori = rew_ori * ai / (ai + 1) + r_ori / (ai + 1)
             if done:
                 break
+        print('step', c)
         reward += rew
         reward_ori += rew_ori
         if done:
@@ -147,6 +148,7 @@ def main():
     parser.add_argument('--target_adv', type=int, default=0)
     parser.add_argument('--target_tau', type=float, default=0)
     parser.add_argument('--random_target', default=False, action='store_true')
+    parser.add_argument('--target_vx', type=float, default=1.25)
     
     args = parser.parse_args()
 
@@ -184,13 +186,15 @@ def main():
               iter=args.iter, bend=args.bend, ent=args.ent, symcoeff=args.sym,
               mirror=args.mirror, reward_version=args.reward, no_acc=args.no_acc,
               difficulty=args.difficulty, fix_target=args.fix_target, action_bias=args.action_bias,
-              target_adv=args.target_adv, target_tau=args.target_tau, random_target=args.random_target)
+              target_adv=args.target_adv, target_tau=args.target_tau, random_target=args.random_target,
+              target_vx=args.target_vx)
     else:
         test(identifier=args.id, policy_fn=policy_fn, seed=args.seed,
              iter=args.iter, mirror=args.mirror, reward_version=args.reward,
              difficulty=args.difficulty, fix_target=args.fix_target,
              no_acc=args.no_acc, action_bias=args.action_bias,
-             target_adv=args.target_adv, target_tau=args.target_tau, random_target=args.random_target)
+             target_adv=args.target_adv, target_tau=args.target_tau, random_target=args.random_target,
+             target_vx=args.target_vx)
 
 
 

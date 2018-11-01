@@ -13,7 +13,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
     def __init__(self, visualize=True, integrator_accuracy=5e-5, bend_para=-0.4,
                  mirror=False, reward_version=0, difficulty=0, fix_target=False,
                  no_acc=False, action_bias=0.0, target_adv=0, target_tau=0,
-                 random_target=False):
+                 random_target=False, target_vx=1.25):
         
         self.mirror = mirror
         self.difficulty = difficulty
@@ -24,6 +24,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
         self.target_tau = target_tau
         self.target_vel = None
         self.random_target = random_target
+        self.target_vx = target_vx
         super().__init__(visualize, integrator_accuracy, difficulty)
         self.bend_para = bend_para
         self.bend_base = np.exp( - np.square(self.bend_para) / 2 ) / ( 1 *  np.sqrt( 2 * np.pi ))
@@ -150,7 +151,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
 
     def reset(self, project = True):
         if self.fix_target:
-            target_x = 0.7 + np.random.random() if self.random_target else 1.25
+            target_x = 0.7 + np.random.random() if self.random_target else self.target_vx
             self.targets = np.array([[target_x, .0, .0] for _ in range(self.time_limit * 2)])
         else:
             self.generate_new_targets()
