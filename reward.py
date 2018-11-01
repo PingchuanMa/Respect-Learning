@@ -195,3 +195,37 @@ class Reward():
 
         rew_all['bend'] = rew_bend
         return rew_all
+
+    def v12(self, state_desc):
+
+        rew_straight = self._rew_straight_v1(state_desc)
+
+        rew_speed = param.w_speed * (
+             np.maximum(np.sqrt(np.abs(self.target_vel[0])) - 
+                np.sqrt(np.abs(self.target_vel[0] - state_desc["body_vel"]["pelvis"][0])), 0) +
+             np.maximum(np.sqrt(np.abs(self.target_vel[2])) - 
+                np.sqrt(np.abs(self.target_vel[2] - state_desc["body_vel"]["pelvis"][2])), 0))
+
+        rew_bend = -param.w_bend * (
+            np.clip(state_desc["joint_pos"]["knee_l"][0], self.bend_para, 0) + 
+            np.clip(state_desc["joint_pos"]["knee_r"][0], self.bend_para, 0))
+
+        rew_all = {'straight': rew_straight, 'speed': rew_speed, 'bend': rew_bend}
+        return rew_all
+
+    def v13(self, state_desc):
+
+        rew_straight = self._rew_straight_v2(state_desc, shift_base=0.0835)
+
+        rew_speed = param.w_speed * (
+             np.maximum(np.sqrt(np.abs(self.target_vel[0])) - 
+                np.sqrt(np.abs(self.target_vel[0] - state_desc["body_vel"]["pelvis"][0])), 0) +
+             np.maximum(np.sqrt(np.abs(self.target_vel[2])) - 
+                np.sqrt(np.abs(self.target_vel[2] - state_desc["body_vel"]["pelvis"][2])), 0))
+
+        rew_bend = -param.w_bend * (
+            np.clip(state_desc["joint_pos"]["knee_l"][0], self.bend_para, 0) + 
+            np.clip(state_desc["joint_pos"]["knee_r"][0], self.bend_para, 0))
+
+        rew_all = {'straight': rew_straight, 'speed': rew_speed, 'bend': rew_bend}
+        return rew_all
