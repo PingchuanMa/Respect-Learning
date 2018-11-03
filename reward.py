@@ -201,10 +201,10 @@ class Reward():
         rew_straight = self._rew_straight_v1(state_desc)
 
         rew_speed = param.w_speed * (
-             np.maximum(np.sqrt(np.abs(self.target_vel[0])) - 
-                np.sqrt(np.abs(self.target_vel[0] - state_desc["body_vel"]["pelvis"][0])), 0) +
-             np.maximum(np.sqrt(np.abs(self.target_vel[2])) - 
-                np.sqrt(np.abs(self.target_vel[2] - state_desc["body_vel"]["pelvis"][2])), 0))
+             np.maximum(np.exp(np.abs(self.target_vel[0])) - 
+                np.exp(np.abs(self.target_vel[0] - state_desc["body_vel"]["pelvis"][0])), 0) +
+             np.maximum(np.exp(np.abs(self.target_vel[2])) - 
+                np.exp(np.abs(self.target_vel[2] - state_desc["body_vel"]["pelvis"][2])), 0))
 
         rew_bend = -param.w_bend * (
             np.clip(state_desc["joint_pos"]["knee_l"][0], self.bend_para, 0) + 

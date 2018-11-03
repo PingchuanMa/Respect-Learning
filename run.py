@@ -77,7 +77,7 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, 
                fix_target=fix_target, no_acc=no_acc, action_bias=action_bias)
     load_state(identifier, iter)
 
-    env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version,
+    env = TestProstheticsEnv(visualize=False, mirror=mirror, reward_version=reward_version,
                              difficulty=difficulty, fix_target=fix_target, no_acc=no_acc, 
                              action_bias=action_bias, target_adv=target_adv, target_tau=target_tau,
                              random_target=random_target, target_vx=target_vx)
