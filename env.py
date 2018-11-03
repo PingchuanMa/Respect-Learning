@@ -66,7 +66,7 @@ class ProstheticsEnv(env.ProstheticsEnv):
     def get_observation(self):
         state_desc = self.get_state_desc()
         self.target_vel = self.soft_update_target_vel( self.target_vel, state_desc["target_vel"] )
-        return state_desc_to_ob(state_desc, self.difficulty, self.mirror, self.no_acc, self.target_vel)
+        return state_desc_to_ob(state_desc, difficulty= self.difficulty,mirror= self.mirror,no_acc = self.no_acc,fix_target= self.fix_target, current_target_vel = self.target_vel)
 
     def get_cascade_arch(self):
         state_desc = self.get_state_desc()

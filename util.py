@@ -56,7 +56,7 @@ def state_desc_to_ob(state_desc, difficulty, mirror=False, no_acc=False, fix_tar
 
     if fix_target:
         target_vel = [1.25, 0, 0]
-
+    # print(target_vel)
     if no_acc:
         info_types = ["body_pos", "body_pos_rot", "body_vel", "body_vel_rot"]
     else:
