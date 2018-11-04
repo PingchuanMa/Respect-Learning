@@ -159,9 +159,8 @@ class ProstheticsEnv(env.ProstheticsEnv):
         return super(ProstheticsEnv, self).reset(project = project)
 
     def generate_new_targets(self):
-        if not self.fix_target:
-            super(ProstheticsEnv, self).generate_new_targets()
-            self.targets = np.concatenate([self.targets[self.target_adv:], np.repeat([self.targets[-1]], self.target_adv, axis=0)])
+        super(ProstheticsEnv, self).generate_new_targets()
+        self.targets = np.concatenate([self.targets[self.target_adv:], np.repeat([self.targets[-1]], self.target_adv, axis=0)])
 
 
 class TestProstheticsEnv(ProstheticsEnv):
