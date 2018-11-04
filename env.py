@@ -31,9 +31,6 @@ class ProstheticsEnv(env.ProstheticsEnv):
         if self.fix_target:
             self.time_limit = 512
 
-        # self.reset()
-        # self.test_soft_update()
-
         if mirror:
             self.reset()
             # additional information are already added into the state descriptions in self.reset() where
@@ -49,7 +46,6 @@ class ProstheticsEnv(env.ProstheticsEnv):
     def is_done(self):
         state_desc = self.get_state_desc()
         return state_desc["body_pos"]["pelvis"][1] < 0.6 # or np.abs(state_desc["body_pos"]["pelvis"][2]) > 0.6   # encourage going straight
-
     
     def soft_update_target_vel( self, prev_target, current_target):
         
@@ -57,17 +53,11 @@ class ProstheticsEnv(env.ProstheticsEnv):
             return current_target
         return [ self.target_tau * p + (1-self.target_tau) * c for p,c in zip( prev_target, current_target ) ]
 
-    # def test_soft_update(self):
-    #     t_v = None
-    #     for c_t in self.targets:
-    #         t_v = self.soft_update_target_vel( t_v, c_t )
-    #         print(t_v)
-
     def get_observation(self):
         state_desc = self.get_state_desc()
         self.target_vel = self.soft_update_target_vel( self.target_vel, state_desc["target_vel"])
         return state_desc_to_ob(state_desc, self.difficulty, self.mirror, self.no_acc, fix_target=self.fix_target,
-            current_target_vel=self.target_vel)
+            current_target_vel=self.target_vel, target_vx=self.target_vx)
 
     def get_cascade_arch(self):
         state_desc = self.get_state_desc()
