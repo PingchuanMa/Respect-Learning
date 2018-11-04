@@ -67,7 +67,7 @@ def main():
             reward_lists.append(reward_list)
         plot_multiple_rewards(reward_lists, args.versions, args.id)
     else:
-        reward_json_path = result_path + 'reward/' + args.id + '_' + args.iter + '.json'
+        reward_json_path = result_path + 'reward/' + args.id + '/' + args.iter + '.json'
         with open(reward_json_path, 'r') as file:
             reward_list = list(json.load(file))
         plot_rewards(reward_list, args.id, args.order)
