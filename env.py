@@ -146,7 +146,11 @@ class ProstheticsEnv(env.ProstheticsEnv):
             self.targets = np.array([[target_x, .0, .0] for _ in range(self.time_limit * 2)])
         else:
             self.generate_new_targets()
-        return super(ProstheticsEnv, self).reset(project = project)
+        self.osim_model.reset()
+        if not project:
+            return self.get_state_desc()
+        else:
+            return self.get_observation()
 
     def generate_new_targets(self):
         super(ProstheticsEnv, self).generate_new_targets()
