@@ -1,0 +1,23 @@
+#!/usr/bin/expect
+set timeout 10
+set passwd Climbingai31415926
+set id [lindex $argv 0 ]
+set iter [lindex $argv 1 ]
+spawn mkdir -p results
+spawn mkdir -p results/model
+spawn mkdir -p results/reward
+spawn mkdir -p results/model/$id
+spawn mkdir -p results/reward/$id
+spawn mkdir -p results/reward/${id}_ori
+spawn scp rbgraphic@192.168.2.3:/vol6/home/rbgraphic/RL/results/model/$id/$iter.ckpt.* results/model/$id/
+expect "rbgraphic@192.168.2.3's password:"
+send "$passwd\r"
+interact
+spawn scp rbgraphic@192.168.2.3:/vol6/home/rbgraphic/RL/results/reward/$id/$iter.json results/reward/$id/
+expect "rbgraphic@192.168.2.3's password:"
+send "$passwd\r"
+interact
+spawn scp rbgraphic@192.168.2.3:/vol6/home/rbgraphic/RL/results/reward/${id}_ori/$iter.json results/reward/${id}_ori/
+expect "rbgraphic@192.168.2.3's password:"
+send "$passwd\r"
+interact

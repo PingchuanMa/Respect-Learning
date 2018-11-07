@@ -1,0 +1,1 @@
+python -u run.py --id clip-fix-limit-bend-rand --layer_norm --difficulty=1 --no_acc --reward=13 --bend=-0.2 --policy=res --net 256 256 256 --play --clear_vz --multiple_model vx1.8/1140 vx1.6/1080 vx1.4/1040 vx1.25/1030 vx0.9/880 vx0.7/1090 --seed $1

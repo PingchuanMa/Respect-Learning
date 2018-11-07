@@ -70,18 +70,30 @@ def train(identifier, policy_fn, num_timesteps, steps_per_iter, seed, bend, ent,
 
 
 def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, fix_target, 
-    no_acc=False, action_bias=0.0, target_adv=0, target_tau=0, random_target=False, target_vx=1.25):
-    
-    pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror,
-               play=True, reward_version=reward_version , difficulty=difficulty,
-               fix_target=fix_target, no_acc=no_acc, action_bias=action_bias)
-    load_state(identifier, iter)
+    no_acc=False, action_bias=0.0, target_adv=0, target_tau=0, random_target=False, target_vx=1.25,
+    multiple_model=None, clear_vz=False):
 
-    env = TestProstheticsEnv(visualize=True, mirror=mirror, reward_version=reward_version,
+    env = TestProstheticsEnv(visualize=False, mirror=mirror, reward_version=reward_version,
                              difficulty=difficulty, fix_target=fix_target, no_acc=no_acc, 
                              action_bias=action_bias, target_adv=target_adv, target_tau=target_tau,
-                             random_target=random_target, target_vx=target_vx)
+                             random_target=random_target, target_vx=target_vx, clear_vz=clear_vz)
+    print(env.observation_space)
     set_global_seeds(seed)
+    
+    if multiple_model is None:
+        pi = train(identifier, policy_fn, 1, 1, seed, bend=0, ent=0, symcoeff=0, mirror=mirror,
+                   play=True, reward_version=reward_version , difficulty=difficulty,
+                   fix_target=fix_target, no_acc=no_acc, action_bias=action_bias)
+        load_state(identifier, iter)
+    else:
+        pi_dict = {}
+        for model_str in multiple_model:
+            m_id, m_iter = model_str.split('/')
+            with tf.variable_scope(m_id):
+                pi = policy_fn("pi", env.observation_space, env.action_space)
+                pi_dict[m_id] = pi
+            load_scoped_state(m_id, m_iter)
+        pi = pi_dict['vx1.25']
 
     # pi = train(identifier, policy_fn, 1, 1, seed, play=True)
 
@@ -91,6 +103,20 @@ def test(identifier, policy_fn, seed, iter, mirror, reward_version, difficulty, 
     reward_ori = 0
     c = 0
     while True:
+        if multiple_model is not None:
+            target_vel_x = env.get_state_desc()['target_vel'][0]
+            if target_vel_x > 1.75:
+                pi = pi_dict['vx1.8']
+            elif target_vel_x > 1.5:
+                pi = pi_dict['vx1.6']
+            elif target_vel_x > 1.35:
+                pi = pi_dict['vx1.4']
+            elif target_vel_x > 1.1:
+                pi = pi_dict['vx1.25']
+            elif target_vel_x > 0.8:
+                pi = pi_dict['vx0.9']
+            else:
+                pi = pi_dict['vx0.7']
         action = pi.act(False, np.array(observation))[0]
         rew = 0
         rew_ori = 0
@@ -149,6 +175,8 @@ def main():
     parser.add_argument('--target_tau', type=float, default=0)
     parser.add_argument('--random_target', default=False, action='store_true')
     parser.add_argument('--target_vx', type=float, default=1.25)
+    parser.add_argument('--multiple_model', type=str, nargs='+', default=None)
+    parser.add_argument('--clear_vz', default=False, action='store_true')
     
     args = parser.parse_args()
 
@@ -194,7 +222,7 @@ def main():
              difficulty=args.difficulty, fix_target=args.fix_target,
              no_acc=args.no_acc, action_bias=args.action_bias,
              target_adv=args.target_adv, target_tau=args.target_tau, random_target=args.random_target,
-             target_vx=args.target_vx)
+             target_vx=args.target_vx, multiple_model=args.multiple_model, clear_vz=args.clear_vz)
 
 
 

@@ -22,6 +22,12 @@ def load_state(identifier, iters_so_far):
     saver.restore(get_session(), fname)
 
 
+def load_scoped_state(identifier, iters_so_far):
+    fname = os.path.join(result_path, 'model', identifier, '%s.ckpt' % iters_so_far)
+    saver = tf.train.Saver(var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=identifier))
+    saver.restore(get_session(), fname)
+
+
 def save_state(identifier, iters_so_far):
     fname = os.path.join(result_path, 'model', identifier, '%s.ckpt' % iters_so_far)
     os.makedirs(os.path.dirname(fname), exist_ok=True)

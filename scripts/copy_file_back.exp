@@ -1,0 +1,8 @@
+#!/usr/bin/expect
+set timeout 10
+set passwd Climbingai31415926
+set file [lindex $argv 0]
+spawn scp rbgraphic@192.168.2.3:/vol6/home/rbgraphic/RL/$file .
+expect "rbgraphic@192.168.2.3's password:"
+send "$passwd\r"
+interact
